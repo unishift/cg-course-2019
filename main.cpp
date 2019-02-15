@@ -14,7 +14,7 @@ using namespace LiteMath;
 
 float3 g_camPos(0, 0, 5);
 float cam_rot[2] = {0, 0};
-int mx = 0, my = 0;
+float mx = 0, my = 0;
 
 void windowResize(GLFWwindow *window, int width, int height) {
     WIDTH = width;
@@ -25,14 +25,14 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     xpos *= 0.05f;
     ypos *= 0.05f;
 
-    int x1 = int(xpos);
-    int y1 = int(ypos);
+    auto x1 = float(xpos);
+    auto y1 = float(ypos);
 
     cam_rot[0] -= 0.25f * (y1 - my);    //Изменение угола поворота
     cam_rot[1] -= 0.25f * (x1 - mx);
 
-    mx = int(xpos);
-    my = int(ypos);
+    mx = x1;
+    my = y1;
 }
 
 int initGL() {

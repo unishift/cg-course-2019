@@ -28,7 +28,7 @@ uniform float4x4 g_rayMatrix;
 uniform float4 g_bgColor = float4(0.0, 0.0, 0.0, 1.0);
 
 const float EPS = 1e-4;
-const int NUM_OF_SPHERES = 2;
+const int NUM_OF_SPHERES = 6;
 
 const Sphere spheres[NUM_OF_SPHERES] = Sphere[NUM_OF_SPHERES](
     Sphere(
@@ -40,6 +40,26 @@ const Sphere spheres[NUM_OF_SPHERES] = Sphere[NUM_OF_SPHERES](
         float4(1.0, 0.0, 1.0, 1.0),
         float3(0.0, 0.0, -5.0),
         1.0
+    ),
+    Sphere(
+        float4(0.0, 1.0, 1.0, 0.5),
+        float3(0.0, -2.0, -5.0),
+        0.5
+    ),
+    Sphere(
+        float4(0.0, 1.0, 1.0, 0.5),
+        float3(0.0, 2.0, -5.0),
+        0.5
+    ),
+    Sphere(
+        float4(0.0, 1.0, 1.0, 0.5),
+        float3(-2.0, 0.0, -5.0),
+        0.5
+    ),
+    Sphere(
+        float4(0.0, 1.0, 1.0, 0.5),
+        float3(2.0, 0.0, -5.0),
+        0.5
     )
 );
 

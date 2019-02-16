@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <random>
 
-static GLsizei WIDTH = 512, HEIGHT = 512; //размеры окна
+static GLsizei WIDTH = 1280, HEIGHT = 720; //размеры окна
 
 using namespace LiteMath;
 
@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
     //создание шейдерной программы из двух файлов с исходниками шейдеров
     //используется класс-обертка ShaderProgram
     std::unordered_map<GLenum, std::string> shaders;
-    shaders[GL_VERTEX_SHADER] = "vertex.glsl";
-    shaders[GL_FRAGMENT_SHADER] = "fragment.glsl";
+    shaders[GL_VERTEX_SHADER] = "shaders/vertex.glsl";
+    shaders[GL_FRAGMENT_SHADER] = "shaders/raytrace.glsl";
     ShaderProgram program(shaders);
     GL_CHECK_ERRORS;
 
@@ -132,6 +132,9 @@ int main(int argc, char **argv) {
     }
 
     //цикл обработки сообщений и отрисовки сцены каждый кадр
+    GLsizei i = 0;
+    double current_time = glfwGetTime();
+    double next_time = 0;
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -152,6 +155,7 @@ int main(int argc, char **argv) {
         program.SetUniform("g_screenWidth", WIDTH);
         program.SetUniform("g_screenHeight", HEIGHT);
 
+
         // очистка и заполнение экрана цветом
         //
         glViewport(0, 0, WIDTH, HEIGHT);
@@ -168,6 +172,16 @@ int main(int argc, char **argv) {
         program.StopUseShader();
 
         glfwSwapBuffers(window);
+        i = (i + 1) % 100;
+
+        // Print fps
+        if (i == 0) {
+            next_time = glfwGetTime();
+            const double elapsed_time = next_time - current_time;
+            current_time = next_time;
+            const std::string title = "FPS -- " + std::to_string(100 / elapsed_time);
+            glfwSetWindowTitle(window, title.c_str());
+        }
     }
 
     //очищаем vboи vao перед закрытием программы

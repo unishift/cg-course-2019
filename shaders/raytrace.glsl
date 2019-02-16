@@ -8,9 +8,13 @@
 
 struct Sphere {
     float4 color;
-
     float3 center;
     float r;
+};
+
+struct LightSource {
+    float3 pos;
+    float intensity;
 };
 
 in float2 fragmentTexCoord;
@@ -28,9 +32,18 @@ uniform float4x4 g_rayMatrix;
 uniform float4 g_bgColor = float4(0.0, 0.0, 0.0, 1.0);
 
 const float EPS = 1e-4;
-const int NUM_OF_SPHERES = 6;
 
-const Sphere spheres[NUM_OF_SPHERES] = Sphere[NUM_OF_SPHERES](
+// Scene layout
+
+const int NUM_OF_LIGHTS = 1;
+const LightSource lights[NUM_OF_LIGHTS] = LightSource[NUM_OF_LIGHTS](
+    LightSource(
+        float3(0.0, -4.0, 10.0),
+        1.0
+    )
+);
+
+const Sphere spheres[] = Sphere[](
     Sphere(
         float4(1.0, 1.0, 0.0, 1.0),
         float3(0.0, 0.0, -10.0),
@@ -76,14 +89,41 @@ float3 EyeRayDir(float x, float y, float w, float h)
 }
 
 float IntersectSphere(float3 pos, Sphere sphere) {
-    return abs(length(pos - sphere.center) - sphere.r);
+    return length(pos - sphere.center) - sphere.r;
+}
+
+float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
+    float3 z1 = z + float3(eps, 0, 0);
+    float3 z2 = z - float3(eps, 0, 0);
+    float3 z3 = z + float3(0, eps, 0);
+    float3 z4 = z - float3(0, eps, 0);
+    float3 z5 = z + float3(0, 0, eps);
+    float3 z6 = z - float3(0, 0, eps);
+
+    float dx = IntersectSphere(z1, sphere) - IntersectSphere(z2, sphere);
+    float dy = IntersectSphere(z3, sphere) - IntersectSphere(z4, sphere);
+    float dz = IntersectSphere(z5, sphere) - IntersectSphere(z6, sphere);
+
+    return normalize(float3(dx, dy, dz) / (2.0*eps));
+}
+
+// Calculate light intensity
+float RayTrace(float3 pos, float3 norm) {
+    float intensity = 0.0;
+
+    for (int i = 0; i < NUM_OF_LIGHTS; i++) {
+        float3 light_direction = normalize(lights[i].pos - pos);
+        intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
+    }
+
+    return intensity;
 }
 
 float4 RayMarch(float3 ray_pos, float3 ray_dir) {
-    float4 color;
     float3 point = ray_pos;
 
     float dist = 10000.0;
+    int chosen_sphere = -1;
     while (dist > EPS) {
         dist = 10000.0;
 
@@ -91,16 +131,26 @@ float4 RayMarch(float3 ray_pos, float3 ray_dir) {
             float tmp = IntersectSphere(point, spheres[i]);
             if (tmp < dist) {
                 dist = tmp;
-                color = spheres[i].color;
+                chosen_sphere = i;
             }
         }
 
         if (dist > 100.0) {
-            color = g_bgColor;
+            chosen_sphere = -1;
             break;
         }
 
         point += dist * ray_dir;
+    }
+
+    float4 color;
+    if (chosen_sphere == -1) {
+        color = g_bgColor;
+    } else {
+        color = spheres[chosen_sphere].color;
+        float alpha = color[3];
+        color *= RayTrace(point, EstimateNormalSphere(point, EPS / 2.0, spheres[chosen_sphere]));
+        color[3] = alpha;
     }
 
     return color;

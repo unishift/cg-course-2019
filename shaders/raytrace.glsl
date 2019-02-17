@@ -6,10 +6,17 @@
 #define float4x4 mat4
 #define float3x3 mat3
 
-struct Sphere {
+struct Material {
     float4 color;
+    float2 albedo;
+    float exponent;
+};
+
+struct Sphere {
     float3 center;
     float r;
+
+    Material material;
 };
 
 struct LightSource {
@@ -35,6 +42,18 @@ const float EPS = 1e-4;
 
 // Scene layout
 
+const Material ivory = Material(
+    float4(0.4, 0.4, 0.4, 1.0),
+    float2(0.6, 0.3),
+    50
+);
+
+const Material red_rubber = Material(
+    float4(0.3, 0.1, 0.1, 1.0),
+    float2(0.9, 0.1),
+    10
+);
+
 const LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, -4.0, 10.0),
@@ -44,34 +63,16 @@ const LightSource lights[] = LightSource[](
 
 const Sphere spheres[] = Sphere[](
     Sphere(
-        float4(1.0, 1.0, 0.0, 1.0),
-        float3(0.0, 0.0, -10.0),
-        3.0
+        float3(-4.0, 0.0, -10.0),
+        3.0,
+
+        ivory
     ),
     Sphere(
-        float4(1.0, 0.0, 1.0, 1.0),
-        float3(0.0, 0.0, -5.0),
-        1.0
-    ),
-    Sphere(
-        float4(0.0, 1.0, 1.0, 0.5),
-        float3(0.0, -2.0, -5.0),
-        0.5
-    ),
-    Sphere(
-        float4(0.0, 1.0, 1.0, 0.5),
-        float3(0.0, 2.0, -5.0),
-        0.5
-    ),
-    Sphere(
-        float4(0.0, 1.0, 1.0, 0.5),
-        float3(-2.0, 0.0, -5.0),
-        0.5
-    ),
-    Sphere(
-        float4(0.0, 1.0, 1.0, 0.5),
-        float3(2.0, 0.0, -5.0),
-        0.5
+        float3(4.0, 0.0, -10.0),
+        3.0,
+
+        red_rubber
     )
 );
 
@@ -106,6 +107,7 @@ float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+// Find first ray intersection with object
 float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
     float3 point = ray_pos;
 
@@ -132,29 +134,22 @@ float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
     return point;
 }
 
-// Calculate light intensity
-float RayTrace(float3 pos, float3 norm) {
-    float intensity = 0.0;
-
-    for (int i = 0; i < lights.length(); i++) {
-        float3 light_direction = normalize(lights[i].pos - pos);
-        intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
-    }
-
-    return intensity;
-}
-
 // Calculate color for point considering light sources
-float4 CalculateColor(float3 point, int chosen_sphere) {
-    float4 color;
-    if (chosen_sphere == -1) {
-        color = g_bgColor;
-    } else {
-        color = spheres[chosen_sphere].color;
-        float alpha = color[3];
-        color *= RayTrace(point, EstimateNormalSphere(point, EPS, spheres[chosen_sphere]));
-        color[3] = alpha;
+float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material material) {
+    float4 color = material.color;
+    float2 albedo = material.albedo;
+    float alpha = color[3];
+
+    float intensity = 0.0;
+    float reflection = 0.0;
+    for (int i = 0; i < lights.length(); i++) {
+        float3 light_direction = normalize(lights[i].pos - point);
+        intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
+        reflection += lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
     }
+
+    color = color * intensity * albedo[0] + float4(1.0, 1.0, 1.0, 0.0) * reflection * albedo[1];
+    color[3] = alpha;
 
     return color;
 }
@@ -186,6 +181,12 @@ void main(void)
 
     int isectSphere;
     float3 isectPoint = RayMarch(ray_pos, ray_dir, isectSphere);
-    fragColor = CalculateColor(isectPoint, isectSphere);
+    if (isectSphere == -1) {
+        fragColor = g_bgColor;
+    } else {
+        fragColor = CalculateColor(ray_dir, isectPoint,
+                                   EstimateNormalSphere(isectPoint, EPS, spheres[isectSphere]),
+                                   spheres[isectSphere].material);
+    }
 }
 

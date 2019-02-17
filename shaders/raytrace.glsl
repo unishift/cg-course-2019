@@ -107,23 +107,10 @@ float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
-// Calculate light intensity
-float RayTrace(float3 pos, float3 norm) {
-    float intensity = 0.0;
-
-    for (int i = 0; i < NUM_OF_LIGHTS; i++) {
-        float3 light_direction = normalize(lights[i].pos - pos);
-        intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
-    }
-
-    return intensity;
-}
-
-float4 RayMarch(float3 ray_pos, float3 ray_dir) {
+float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
     float3 point = ray_pos;
 
     float dist = 10000.0;
-    int chosen_sphere = -1;
     while (dist > EPS) {
         dist = 10000.0;
 
@@ -143,13 +130,30 @@ float4 RayMarch(float3 ray_pos, float3 ray_dir) {
         point += dist * ray_dir;
     }
 
+    return point;
+}
+
+// Calculate light intensity
+float RayTrace(float3 pos, float3 norm) {
+    float intensity = 0.0;
+
+    for (int i = 0; i < NUM_OF_LIGHTS; i++) {
+        float3 light_direction = normalize(lights[i].pos - pos);
+        intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
+    }
+
+    return intensity;
+}
+
+// Calculate color for point considering light sources
+float4 CalculateColor(float3 point, int chosen_sphere) {
     float4 color;
     if (chosen_sphere == -1) {
         color = g_bgColor;
     } else {
         color = spheres[chosen_sphere].color;
         float alpha = color[3];
-        color *= RayTrace(point, EstimateNormalSphere(point, EPS / 2.0, spheres[chosen_sphere]));
+        color *= RayTrace(point, EstimateNormalSphere(point, EPS, spheres[chosen_sphere]));
         color[3] = alpha;
     }
 
@@ -181,6 +185,8 @@ void main(void)
     float tmin = 1e38f;
     float tmax = 0;
 
-    fragColor = RayMarch(ray_pos, ray_dir);
+    int isectSphere;
+    float3 isectPoint = RayMarch(ray_pos, ray_dir, isectSphere);
+    fragColor = CalculateColor(isectPoint, isectSphere);
 }
 

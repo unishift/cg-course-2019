@@ -35,8 +35,7 @@ const float EPS = 1e-4;
 
 // Scene layout
 
-const int NUM_OF_LIGHTS = 1;
-const LightSource lights[NUM_OF_LIGHTS] = LightSource[NUM_OF_LIGHTS](
+const LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, -4.0, 10.0),
         1.0
@@ -114,7 +113,7 @@ float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
     while (dist > EPS) {
         dist = 10000.0;
 
-        for (int i = 0; i < NUM_OF_SPHERES; i++) {
+        for (int i = 0; i < spheres.length(); i++) {
             float tmp = IntersectSphere(point, spheres[i]);
             if (tmp < dist) {
                 dist = tmp;
@@ -137,7 +136,7 @@ float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
 float RayTrace(float3 pos, float3 norm) {
     float intensity = 0.0;
 
-    for (int i = 0; i < NUM_OF_LIGHTS; i++) {
+    for (int i = 0; i < lights.length(); i++) {
         float3 light_direction = normalize(lights[i].pos - pos);
         intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
     }

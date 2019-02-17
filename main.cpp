@@ -21,6 +21,9 @@ void windowResize(GLFWwindow *window, int width, int height) {
     HEIGHT = height;
 }
 
+static bool permitMouseMove = false;
+
+// Callback for mouse movement
 static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     xpos *= 0.05f;
     ypos *= 0.05f;
@@ -28,11 +31,28 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     auto x1 = float(xpos);
     auto y1 = float(ypos);
 
-    cam_rot[0] -= 0.25f * (y1 - my);    //Изменение угола поворота
-    cam_rot[1] -= 0.25f * (x1 - mx);
+    if (permitMouseMove) {
+        cam_rot[0] -= 0.25f * (y1 - my);
+        cam_rot[1] -= 0.25f * (x1 - mx);
+    }
 
     mx = x1;
     my = y1;
+}
+
+// Callback for actions with mouse buttons
+// Permit camera movements with left button pressed only
+static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            permitMouseMove = true;
+
+        } else if (action == GLFW_RELEASE) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            permitMouseMove = false;
+        }
+    }
 }
 
 int initGL() {
@@ -68,6 +88,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    glfwSetMouseButtonCallback(window, mouseButton);
     glfwSetCursorPosCallback(window, mouseMove);
     glfwSetWindowSizeCallback(window, windowResize);
 

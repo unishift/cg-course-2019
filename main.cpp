@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL ray marching sample", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "RayTrace task -- FPS ??", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
             next_time = glfwGetTime();
             const double elapsed_time = next_time - current_time;
             current_time = next_time;
-            const std::string title = "FPS -- " + std::to_string(100 / elapsed_time);
+            const std::string title = "RayTrace task -- FPS " + std::to_string(int(100 / elapsed_time));
             glfwSetWindowTitle(window, title.c_str());
         }
     }

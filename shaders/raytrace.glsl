@@ -36,7 +36,7 @@ uniform float3 g_bBoxMax   = float3(+1,+1,+1);
 
 uniform float4x4 g_rayMatrix;
 
-uniform float4 g_bgColor = float4(0.0, 0.0, 0.0, 1.0);
+uniform float4 g_bgColor = float4(0.1, 0.1, 0.1, 1.0);
 
 const float EPS = 1e-4;
 

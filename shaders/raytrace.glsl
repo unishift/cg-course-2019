@@ -19,6 +19,13 @@ struct Sphere {
     Material material;
 };
 
+struct Box {
+    float3 center;
+    float3 size;
+
+    Material material;
+};
+
 struct LightSource {
     float3 pos;
     float intensity;
@@ -80,6 +87,21 @@ const Sphere spheres[] = Sphere[](
     )
 );
 
+const Box boxes[] = Box[](
+    Box(
+        float3(8.0, 5.0, -10.0),
+        float3(3.0, 1.0, 1.0),
+
+        red_rubber
+    ),
+    Box(
+        float3(-8.0, 5.0, -10.0),
+        float3(1.0, 3.0, 1.0),
+
+        ivory
+    )
+);
+
 float3 EyeRayDir(float x, float y, float w, float h)
 {
 	float fov = 3.141592654f/(2.0f);
@@ -94,6 +116,10 @@ float3 EyeRayDir(float x, float y, float w, float h)
 
 float IntersectSphere(float3 pos, Sphere sphere) {
     return length(pos - sphere.center) - sphere.r;
+}
+
+float IntersectBox(float3 pos, Box box) {
+    return length(max(abs(pos - box.center) - box.size, 0.0));
 }
 
 float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
@@ -111,7 +137,24 @@ float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+float3 EstimateNormalBox(float3 z, float eps, Box box) {
+    float3 z1 = z + float3(eps, 0, 0);
+    float3 z2 = z - float3(eps, 0, 0);
+    float3 z3 = z + float3(0, eps, 0);
+    float3 z4 = z - float3(0, eps, 0);
+    float3 z5 = z + float3(0, 0, eps);
+    float3 z6 = z - float3(0, 0, eps);
+
+    float dx = IntersectBox(z1, box) - IntersectBox(z2, box);
+    float dy = IntersectBox(z3, box) - IntersectBox(z4, box);
+    float dz = IntersectBox(z5, box) - IntersectBox(z6, box);
+
+    return normalize(float3(dx, dy, dz) / (2.0*eps));
+}
+
+
 const int SPHERE = 0;
+const int BOX = 1;
 // Find first ray intersection with object
 // Return position, norm to object and material of object
 bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm, out Material material) {
@@ -123,11 +166,22 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
     while (dist > EPS) {
         dist = 10000.0;
 
+        // Check spheres
         for (int i = 0; i < spheres.length(); i++) {
             float tmp = IntersectSphere(point, spheres[i]);
             if (tmp < dist) {
                 dist = tmp;
                 object_type = SPHERE;
+                object_index = i;
+            }
+        }
+
+        // Check boxes
+        for (int i = 0; i < boxes.length(); i++) {
+            float tmp = IntersectBox(point, boxes[i]);
+            if (tmp < dist) {
+                dist = tmp;
+                object_type = BOX;
                 object_index = i;
             }
         }
@@ -144,6 +198,10 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
         case SPHERE:
             norm = EstimateNormalSphere(point, EPS, spheres[object_index]);
             material = spheres[object_index].material;
+            break;
+        case BOX:
+            norm = EstimateNormalBox(point, EPS, boxes[object_index]);
+            material = boxes[object_index].material;
             break;
         case -1:
             return false;

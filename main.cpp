@@ -12,9 +12,28 @@ static GLsizei WIDTH = 1280, HEIGHT = 720; //размеры окна
 
 using namespace LiteMath;
 
-float3 g_camPos(0, 0, 5);
+const float3 g_camPos_default(0, 0, 5);
+float3 g_camPos = g_camPos_default;
 float cam_rot[2] = {0, 0};
 float mx = 0, my = 0;
+
+//float4x4 rot_mat;
+constexpr float scale = 0.5f;
+const float3 forward_default(0.0f, 0.0f, -scale);
+const float3 left_default(-scale, 0.0f, 0.0f);
+const float3 up_default(0.0f, scale, 0.0f);
+
+float3 forward;
+float3 left;
+float3 up;
+
+void setDefaultSettings() {
+    g_camPos = g_camPos_default;
+    cam_rot[0] = 0.0f; cam_rot[1] = 0.0f;
+    forward = forward_default;
+    left = left_default;
+    up = up_default;
+}
 
 void windowResize(GLFWwindow *window, int width, int height) {
     WIDTH = width;
@@ -34,6 +53,11 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     if (permitMouseMove) {
         cam_rot[0] -= 0.25f * (y1 - my);
         cam_rot[1] -= 0.25f * (x1 - mx);
+
+        const float4x4 rot_mat = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
+        forward = mul(rot_mat, forward_default);
+        left = mul(rot_mat, left_default);
+        up = mul(rot_mat, up_default);
     }
 
     mx = x1;
@@ -63,10 +87,6 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // Q - up
 // E - down
 static void wasdControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    constexpr float scale = 0.5f;
-    const float3 forward = float3(0.0f, 0.0f, -scale);
-    const float3 left = float3(-scale, 0.0f, 0.0f);
-    const float3 up = float3(0.0f, scale, 0.0f);
 
     static float3 step = {0.0f, 0.0f, 0.0f};
     if (action == GLFW_REPEAT) {
@@ -117,6 +137,11 @@ static void wasdControls(GLFWwindow *window, int key, int scancode, int action, 
                 step += up;
             }
             break;
+        case GLFW_KEY_SPACE:
+            if (action == GLFW_PRESS) {
+                setDefaultSettings();
+            }
+            break;
         default:
             break;
     }
@@ -155,6 +180,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    setDefaultSettings();
     glfwSetMouseButtonCallback(window, mouseButton);
     glfwSetCursorPosCallback(window, mouseMove);
     glfwSetWindowSizeCallback(window, windowResize);
@@ -236,10 +262,11 @@ int main(int argc, char **argv) {
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
-        float4x4 camRotMatrix = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
-        float4x4 camTransMatrix = translate4x4(g_camPos);
-        float4x4 rayMatrix = mul(camRotMatrix, camTransMatrix);
-        program.SetUniform("g_rayMatrix", rayMatrix);
+        float4x4 g_rayMatrix = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
+        g_rayMatrix.M(3, 0) = g_camPos.x;
+        g_rayMatrix.M(3, 1) = g_camPos.y;
+        g_rayMatrix.M(3, 2) = g_camPos.z;
+        program.SetUniform("g_rayMatrix", g_rayMatrix);
 
         program.SetUniform("g_screenWidth", WIDTH);
         program.SetUniform("g_screenHeight", HEIGHT);

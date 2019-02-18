@@ -55,6 +55,73 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
     }
 }
 
+// Callback for movement controls
+// W - forward
+// A - left
+// S - backward
+// D - right
+// Q - up
+// E - down
+static void wasdControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    constexpr float scale = 0.5f;
+    const float3 forward = float3(0.0f, 0.0f, -scale);
+    const float3 left = float3(-scale, 0.0f, 0.0f);
+    const float3 up = float3(0.0f, scale, 0.0f);
+
+    static float3 step = {0.0f, 0.0f, 0.0f};
+    if (action == GLFW_REPEAT) {
+        g_camPos += step;
+        return;
+    }
+
+    switch (key) {
+        case GLFW_KEY_W:
+            if (action == GLFW_PRESS) {
+                step += forward;
+            } else if (action == GLFW_RELEASE) {
+                step -= forward;
+            }
+            break;
+        case GLFW_KEY_A:
+            if (action == GLFW_PRESS) {
+                step += left;
+            } else if (action == GLFW_RELEASE) {
+                step -= left;
+            }
+            break;
+        case GLFW_KEY_S:
+            if (action == GLFW_PRESS) {
+                step -= forward;
+            } else if (action == GLFW_RELEASE) {
+                step += forward;
+            }
+            break;
+        case GLFW_KEY_D:
+            if (action == GLFW_PRESS) {
+                step -= left;
+            } else if (action == GLFW_RELEASE) {
+                step += left;
+            }
+            break;
+        case GLFW_KEY_Q:
+            if (action == GLFW_PRESS) {
+                step += up;
+            } else if (action == GLFW_RELEASE) {
+                step -= up;
+            }
+            break;
+        case GLFW_KEY_E:
+            if (action == GLFW_PRESS) {
+                step -= up;
+            } else if (action == GLFW_RELEASE) {
+                step += up;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 int initGL() {
     int res = 0;
     //грузим функции opengl через glad
@@ -91,6 +158,7 @@ int main(int argc, char **argv) {
     glfwSetMouseButtonCallback(window, mouseButton);
     glfwSetCursorPosCallback(window, mouseMove);
     glfwSetWindowSizeCallback(window, windowResize);
+    glfwSetKeyCallback(window, wasdControls);
 
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

@@ -86,7 +86,8 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // D - right
 // Q - up
 // E - down
-static void wasdControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
+// SPACE - reset position
+static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
     static float3 step = {0.0f, 0.0f, 0.0f};
     if (action == GLFW_REPEAT) {
@@ -188,7 +189,7 @@ int main(int argc, char **argv) {
     glfwSetMouseButtonCallback(window, mouseButton);
     glfwSetCursorPosCallback(window, mouseMove);
     glfwSetWindowSizeCallback(window, windowResize);
-    glfwSetKeyCallback(window, wasdControls);
+    glfwSetKeyCallback(window, keyboardControls);
 
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -209,7 +210,7 @@ int main(int argc, char **argv) {
     ShaderProgram program(shaders);
     GL_CHECK_ERRORS;
 
-    glfwSwapInterval(1); // force 60 frames per second
+    glfwSwapInterval(0); // force 60 frames per second
 
     //Создаем и загружаем геометрию поверхности
     //

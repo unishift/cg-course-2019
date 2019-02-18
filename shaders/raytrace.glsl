@@ -236,24 +236,16 @@ void main(void)
     float h = float(g_screenHeight);
 
     // get curr pixelcoordinates
-    //
     float x = fragmentTexCoord.x*w;
     float y = fragmentTexCoord.y*h;
 
     // generate initial ray
-    //
     float3 ray_pos = float3(0,0,0);
     float3 ray_dir = EyeRayDir(x,y,w,h);
 
     // transorm ray with matrix
-    //
     ray_pos = (g_rayMatrix*float4(ray_pos,1)).xyz;
     ray_dir = float3x3(g_rayMatrix)*ray_dir;
-
-    // intersect bounding box of the whole scene, if no intersection found return background color
-    //
-    float tmin = 1e38f;
-    float tmax = 0;
 
     float3 isectPoint;
     float3 isectNorm;

@@ -18,7 +18,7 @@ float cam_rot[2] = {0, 0};
 float mx = 0, my = 0;
 
 //float4x4 rot_mat;
-constexpr float scale = 0.5f;
+constexpr float scale = 1.0f;
 const float3 forward_default(0.0f, 0.0f, -scale);
 const float3 left_default(-scale, 0.0f, 0.0f);
 const float3 up_default(0.0f, scale, 0.0f);

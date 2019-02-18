@@ -111,11 +111,15 @@ float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+const int SPHERE = 0;
 // Find first ray intersection with object
-float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
-    float3 point = ray_pos;
+// Return position, norm to object and material of object
+bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm, out Material material) {
+    point = ray_pos;
 
     float dist = 10000.0;
+    int object_type;
+    int object_index;
     while (dist > EPS) {
         dist = 10000.0;
 
@@ -123,19 +127,29 @@ float3 RayMarch(float3 ray_pos, float3 ray_dir, out int chosen_sphere) {
             float tmp = IntersectSphere(point, spheres[i]);
             if (tmp < dist) {
                 dist = tmp;
-                chosen_sphere = i;
+                object_type = SPHERE;
+                object_index = i;
             }
         }
 
         if (dist > 100.0) {
-            chosen_sphere = -1;
+            object_type = -1;
             break;
         }
 
         point += dist * ray_dir;
     }
 
-    return point;
+    switch (object_type) {
+        case SPHERE:
+            norm = EstimateNormalSphere(point, EPS, spheres[object_index]);
+            material = spheres[object_index].material;
+            break;
+        case -1:
+            return false;
+    }
+
+    return true;
 }
 
 // Calculate color for point considering light sources
@@ -183,14 +197,14 @@ void main(void)
     float tmin = 1e38f;
     float tmax = 0;
 
-    int isectSphere;
-    float3 isectPoint = RayMarch(ray_pos, ray_dir, isectSphere);
-    if (isectSphere == -1) {
+    float3 isectPoint;
+    float3 isectNorm;
+    Material isectMaterial;
+    bool isForeground = RayMarch(ray_pos, ray_dir, isectPoint, isectNorm, isectMaterial);
+    if (!isForeground) {
         fragColor = g_bgColor;
     } else {
-        fragColor = CalculateColor(ray_dir, isectPoint,
-                                   EstimateNormalSphere(isectPoint, EPS, spheres[isectSphere]),
-                                   spheres[isectSphere].material);
+        fragColor = CalculateColor(ray_dir, isectPoint, isectNorm, isectMaterial);
     }
 }
 

@@ -14,25 +14,18 @@ using namespace LiteMath;
 
 const float3 g_camPos_default(0, 0, 5);
 float3 g_camPos = g_camPos_default;
-float cam_rot[2] = {0, 0};
+float cam_rot[] = {0, 0, 0};
 float mx = 0, my = 0;
 
 //float4x4 rot_mat;
 constexpr float scale = 1.0f;
-const float3 forward_default(0.0f, 0.0f, -scale);
-const float3 left_default(-scale, 0.0f, 0.0f);
-const float3 up_default(0.0f, scale, 0.0f);
-
-float3 forward;
-float3 left;
-float3 up;
+const float3 forward(0.0f, 0.0f, -scale);
+const float3 left(-scale, 0.0f, 0.0f);
+const float3 up(0.0f, scale, 0.0f);
 
 void setDefaultSettings() {
     g_camPos = g_camPos_default;
-    cam_rot[0] = 0.0f; cam_rot[1] = 0.0f;
-    forward = forward_default;
-    left = left_default;
-    up = up_default;
+    cam_rot[0] = 0.0f; cam_rot[1] = 0.0f; cam_rot[2] = 0.0f;
 }
 
 void windowResize(GLFWwindow *window, int width, int height) {
@@ -53,11 +46,6 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     if (permitMouseMove) {
         cam_rot[0] -= y1 - my;
         cam_rot[1] -= x1 - mx;
-
-        const float4x4 rot_mat = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
-        forward = mul(rot_mat, forward_default);
-        left = mul(rot_mat, left_default);
-        up = mul(rot_mat, up_default);
     }
 
     mx = x1;
@@ -88,6 +76,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // E - down
 // SPACE - reset position
 float3 step = {0.0f, 0.0f, 0.0f};
+float rot_step = 0.0f;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
     switch (key) {
@@ -135,6 +124,20 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
                 step -= up;
             } else if (action == GLFW_RELEASE) {
                 step += up;
+            }
+            break;
+        case GLFW_KEY_Q:
+            if (action == GLFW_PRESS) {
+                rot_step += 0.1f;
+            } else if (action == GLFW_RELEASE) {
+                rot_step -= 0.1f;
+            }
+            break;
+        case GLFW_KEY_E:
+            if (action == GLFW_PRESS) {
+                rot_step -= 0.1f;
+            } else if (action == GLFW_RELEASE) {
+                rot_step += 0.1f;
             }
             break;
         case GLFW_KEY_SPACE:
@@ -262,11 +265,14 @@ int main(int argc, char **argv) {
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
-        g_camPos += step;
-        float4x4 g_rayMatrix = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
+        cam_rot[2] += rot_step;
+        float4x4 g_rayMatrix = mul(rotate_Z_4x4(cam_rot[2]), mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0])));
+
+        g_camPos += mul(g_rayMatrix, step);
         g_rayMatrix.M(3, 0) = g_camPos.x;
         g_rayMatrix.M(3, 1) = g_camPos.y;
         g_rayMatrix.M(3, 2) = g_camPos.z;
+
         program.SetUniform("g_rayMatrix", g_rayMatrix);
 
         program.SetUniform("g_screenWidth", WIDTH);

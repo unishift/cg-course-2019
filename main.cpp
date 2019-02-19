@@ -123,14 +123,14 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
                 step += left;
             }
             break;
-        case GLFW_KEY_Q:
+        case GLFW_KEY_R:
             if (action == GLFW_PRESS) {
                 step += up;
             } else if (action == GLFW_RELEASE) {
                 step -= up;
             }
             break;
-        case GLFW_KEY_E:
+        case GLFW_KEY_F:
             if (action == GLFW_PRESS) {
                 step -= up;
             } else if (action == GLFW_RELEASE) {

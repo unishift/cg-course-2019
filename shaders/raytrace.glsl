@@ -45,7 +45,7 @@ uniform float4x4 g_rayMatrix;
 
 uniform float4 g_bgColor = float4(0.1, 0.1, 0.1, 1.0);
 
-const float EPS = 1e-4;
+const float EPS = 1e-2;
 
 // Scene layout
 

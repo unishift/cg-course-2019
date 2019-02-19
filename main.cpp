@@ -44,15 +44,15 @@ static bool permitMouseMove = false;
 
 // Callback for mouse movement
 static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
-    xpos *= 0.05f;
-    ypos *= 0.05f;
+    xpos *= 0.01f;
+    ypos *= 0.01f;
 
     auto x1 = float(xpos);
     auto y1 = float(ypos);
 
     if (permitMouseMove) {
-        cam_rot[0] -= 0.25f * (y1 - my);
-        cam_rot[1] -= 0.25f * (x1 - mx);
+        cam_rot[0] -= y1 - my;
+        cam_rot[1] -= x1 - mx;
 
         const float4x4 rot_mat = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
         forward = mul(rot_mat, forward_default);
@@ -69,7 +69,7 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
 static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             permitMouseMove = true;
 
         } else if (action == GLFW_RELEASE) {
@@ -87,6 +87,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // Q - up
 // E - down
 // SPACE - reset position
+float3 step = {0.0f, 0.0f, 0.0f};
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
     switch (key) {

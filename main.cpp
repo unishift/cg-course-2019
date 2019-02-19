@@ -89,12 +89,6 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // SPACE - reset position
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
 
-    static float3 step = {0.0f, 0.0f, 0.0f};
-    if (action == GLFW_REPEAT) {
-        g_camPos += step;
-        return;
-    }
-
     switch (key) {
         case GLFW_KEY_W:
         case GLFW_KEY_UP:
@@ -267,6 +261,7 @@ int main(int argc, char **argv) {
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
+        g_camPos += step;
         float4x4 g_rayMatrix = mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0]));
         g_rayMatrix.M(3, 0) = g_camPos.x;
         g_rayMatrix.M(3, 1) = g_camPos.y;

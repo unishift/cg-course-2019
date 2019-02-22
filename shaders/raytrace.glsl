@@ -18,12 +18,9 @@ layout(location = 0) out vec4 fragColor;
 uniform int g_screenWidth;
 uniform int g_screenHeight;
 
-uniform float3 g_bBoxMin   = float3(-1,-1,-1);
-uniform float3 g_bBoxMax   = float3(+1,+1,+1);
-
 uniform float4x4 g_rayMatrix;
 
-uniform float4 g_bgColor = float4(0.1, 0.1, 0.1, 1.0);
+uniform float4 g_bgColor = float4(0.5, 0.5, 0.5, 1.0);
 
 const float EPS = 1e-2;
 
@@ -141,25 +138,25 @@ float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
 
 uniform LightSource lights[] = LightSource[](
     LightSource(
-        float3(0.0, -4.0, 10.0),
+        float3(0.0, 4.0, 10.0),
         1.0
     ),
     LightSource(
-        float3(0.0, 15.0, -5.0),
-        0.5
+        float3(10.0, 20.0, 1.0),
+        1.0
     )
 );
 
 uniform Sphere spheres[] = Sphere[](
     Sphere(
-        float3(-4.0, 0.0, -10.0),
+        float3(0.0, 0.0, 0.0),
         3.0,
 
         ivory
     ),
     Sphere(
-        float3(4.0, 0.0, -10.0),
-        3.0,
+        float3(4.0, 5.0, 1.5),
+        2.0,
 
         gold
     )
@@ -177,13 +174,19 @@ uniform Box boxes[] = Box[](
         float3(1.0, 3.0, 1.0),
 
         ivory
+    ),
+    Box(
+        float3(0.0, -10.0, 0.0),
+        float3(30.0, 0.1, 30.0),
+
+        gold
     )
 );
 
 uniform Torus toruses[] = Torus[](
     Torus(
         float3(0.0, 20.0, 0.0),
-        float2(40.0, 1.0),
+        float2(10.0, 0.4),
 
         red_rubber
     )

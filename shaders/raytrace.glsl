@@ -6,33 +6,6 @@
 #define float4x4 mat4
 #define float3x3 mat3
 
-struct Material {
-    float4 color;
-    float2 albedo;
-    float exponent;
-};
-
-struct Sphere {
-    float3 center;
-    float r;
-
-    Material material;
-};
-
-struct Box {
-    float3 center;
-    float3 size;
-
-    Material material;
-};
-
-struct Torus {
-    float3 center;
-    float2 size;
-
-    Material material;
-};
-
 struct LightSource {
     float3 pos;
     float intensity;
@@ -54,7 +27,14 @@ uniform float4 g_bgColor = float4(0.1, 0.1, 0.1, 1.0);
 
 const float EPS = 1e-2;
 
-// Scene layout
+
+// Materials
+
+struct Material {
+    float4 color;
+    float2 albedo;
+    float exponent;
+};
 
 const Material ivory = Material(
     float4(0.4, 0.4, 0.4, 1.0),
@@ -74,79 +54,18 @@ const Material gold = Material(
     83.2
 );
 
-const LightSource lights[] = LightSource[](
-    LightSource(
-        float3(0.0, -4.0, 10.0),
-        1.0
-    ),
-    LightSource(
-        float3(0.0, 15.0, -5.0),
-        0.5
-    )
-);
 
-const Sphere spheres[] = Sphere[](
-    Sphere(
-        float3(-4.0, 0.0, -10.0),
-        3.0,
+// Primitives
 
-        ivory
-    ),
-    Sphere(
-        float3(4.0, 0.0, -10.0),
-        3.0,
+struct Sphere {
+    float3 center;
+    float r;
 
-        gold
-    )
-);
-
-const Box boxes[] = Box[](
-    Box(
-        float3(8.0, 5.0, -10.0),
-        float3(3.0, 1.0, 1.0),
-
-        red_rubber
-    ),
-    Box(
-        float3(-8.0, 5.0, -10.0),
-        float3(1.0, 3.0, 1.0),
-
-        ivory
-    )
-);
-
-const Torus toruses[] = Torus[](
-    Torus(
-        float3(0.0, 20.0, 0.0),
-        float2(40.0, 1.0),
-
-        red_rubber
-    )
-);
-
-float3 EyeRayDir(float x, float y, float w, float h)
-{
-	float fov = 3.141592654f/(2.0f);
-    float3 ray_dir;
-
-	ray_dir.x = x+0.5f - (w/2.0f);
-	ray_dir.y = y+0.5f - (h/2.0f);
-	ray_dir.z = -(w)/tan(fov/2.0f);
-
-    return normalize(ray_dir);
-}
+    Material material;
+};
 
 float IntersectSphere(float3 pos, Sphere sphere) {
     return length(pos - sphere.center) - sphere.r;
-}
-
-float IntersectBox(float3 pos, Box box) {
-    return length(max(abs(pos - box.center) - box.size, 0.0));
-}
-
-float IntersectTorus(float3 pos, Torus torus) {
-    float2 q = float2(length((pos - torus.center).xz) - torus.size.x, pos.y);
-    return length(q)-torus.size.y;
 }
 
 float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
@@ -164,6 +83,17 @@ float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+struct Box {
+    float3 center;
+    float3 size;
+
+    Material material;
+};
+
+float IntersectBox(float3 pos, Box box) {
+    return length(max(abs(pos - box.center) - box.size, 0.0));
+}
+
 float3 EstimateNormalBox(float3 z, float eps, Box box) {
     float3 z1 = z + float3(eps, 0, 0);
     float3 z2 = z - float3(eps, 0, 0);
@@ -179,6 +109,18 @@ float3 EstimateNormalBox(float3 z, float eps, Box box) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+struct Torus {
+    float3 center;
+    float2 size;
+
+    Material material;
+};
+
+float IntersectTorus(float3 pos, Torus torus) {
+    float2 q = float2(length((pos - torus.center).xz) - torus.size.x, pos.y);
+    return length(q)-torus.size.y;
+}
+
 float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
     float3 z1 = z + float3(eps, 0, 0);
     float3 z2 = z - float3(eps, 0, 0);
@@ -192,6 +134,72 @@ float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
     float dz = IntersectTorus(z5, torus) - IntersectTorus(z6, torus);
 
     return normalize(float3(dx, dy, dz) / (2.0*eps));
+}
+
+
+// Scene layout
+
+uniform LightSource lights[] = LightSource[](
+    LightSource(
+        float3(0.0, -4.0, 10.0),
+        1.0
+    ),
+    LightSource(
+        float3(0.0, 15.0, -5.0),
+        0.5
+    )
+);
+
+uniform Sphere spheres[] = Sphere[](
+    Sphere(
+        float3(-4.0, 0.0, -10.0),
+        3.0,
+
+        ivory
+    ),
+    Sphere(
+        float3(4.0, 0.0, -10.0),
+        3.0,
+
+        gold
+    )
+);
+
+uniform Box boxes[] = Box[](
+    Box(
+        float3(8.0, 5.0, -10.0),
+        float3(3.0, 1.0, 1.0),
+
+        red_rubber
+    ),
+    Box(
+        float3(-8.0, 5.0, -10.0),
+        float3(1.0, 3.0, 1.0),
+
+        ivory
+    )
+);
+
+uniform Torus toruses[] = Torus[](
+    Torus(
+        float3(0.0, 20.0, 0.0),
+        float2(40.0, 1.0),
+
+        red_rubber
+    )
+);
+
+
+float3 EyeRayDir(float x, float y, float w, float h)
+{
+	float fov = 3.141592654f/(2.0f);
+    float3 ray_dir;
+
+	ray_dir.x = x+0.5f - (w/2.0f);
+	ray_dir.y = y+0.5f - (h/2.0f);
+	ray_dir.z = -(w)/tan(fov/2.0f);
+
+    return normalize(ray_dir);
 }
 
 const int SPHERE = 0;

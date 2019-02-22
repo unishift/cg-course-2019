@@ -75,6 +75,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // Q - up
 // E - down
 // SPACE - reset position
+float multiplier = 1.0f;
 float3 step = {0.0f, 0.0f, 0.0f};
 float rot_step = 0.0f;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -138,6 +139,14 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
                 rot_step -= 0.1f;
             } else if (action == GLFW_RELEASE) {
                 rot_step += 0.1f;
+            }
+            break;
+        case GLFW_KEY_LEFT_SHIFT:
+        case GLFW_KEY_RIGHT_SHIFT:
+            if (action == GLFW_PRESS) {
+                multiplier *= 2;
+            } else if (action == GLFW_RELEASE) {
+                multiplier /= 2;
             }
             break;
         case GLFW_KEY_SPACE:
@@ -268,7 +277,7 @@ int main(int argc, char **argv) {
         cam_rot[2] += rot_step;
         float4x4 g_rayMatrix = mul(rotate_Z_4x4(cam_rot[2]), mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0])));
 
-        g_camPos += mul(g_rayMatrix, step);
+        g_camPos += mul(g_rayMatrix, multiplier * step);
         g_rayMatrix.M(3, 0) = g_camPos.x;
         g_rayMatrix.M(3, 1) = g_camPos.y;
         g_rayMatrix.M(3, 2) = g_camPos.z;

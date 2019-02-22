@@ -68,6 +68,12 @@ const Material red_rubber = Material(
     10
 );
 
+const Material gold = Material(
+    4 * float4(0.24725, 0.2245, 0.0645, 1.0),
+    float2(0.3, 0.8),
+    83.2
+);
+
 const LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, -4.0, 10.0),
@@ -90,7 +96,7 @@ const Sphere spheres[] = Sphere[](
         float3(4.0, 0.0, -10.0),
         3.0,
 
-        red_rubber
+        gold
     )
 );
 

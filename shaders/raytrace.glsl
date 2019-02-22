@@ -29,26 +29,32 @@ const float EPS = 1e-2;
 
 struct Material {
     float4 color;
-    float2 albedo;
+    float3 albedo;
     float exponent;
 };
 
 const Material ivory = Material(
     float4(0.4, 0.4, 0.4, 1.0),
-    float2(0.6, 0.3),
+    float3(0.6, 0.3, 0.1),
     50
 );
 
 const Material red_rubber = Material(
     float4(0.3, 0.1, 0.1, 1.0),
-    float2(0.9, 0.1),
+    float3(0.9, 0.1, 0.0),
     10
 );
 
 const Material gold = Material(
     4 * float4(0.24725, 0.2245, 0.0645, 1.0),
-    float2(0.3, 0.8),
+    float3(0.3, 0.8, 0.2),
     83.2
+);
+
+const Material mirror = Material(
+    float4(1.0, 1.0, 1.0, 1.0),
+    float3(0.0, 10.0, 0.8),
+    1425.0
 );
 
 
@@ -139,7 +145,7 @@ float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
 uniform LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, 4.0, 10.0),
-        1.0
+        2.0
     ),
     LightSource(
         float3(10.0, 20.0, 1.0),
@@ -152,7 +158,7 @@ uniform Sphere spheres[] = Sphere[](
         float3(0.0, 0.0, 0.0),
         3.0,
 
-        ivory
+        mirror
     ),
     Sphere(
         float3(4.0, 5.0, 1.5),
@@ -279,30 +285,50 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
 
 // Calculate color for point considering light sources
 float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material material) {
-    float4 color = material.color;
-    float2 albedo = material.albedo;
-    float alpha = color[3];
+    float ref_modifier = 1.0;
+    float4 color = float4(0.0, 0.0, 0.0, 1.0);
+    for (int depth = 0; depth < 2; depth++) {
+        float3 albedo = material.albedo;
 
-    float intensity = 0.0;
-    float reflection = 0.0;
-    for (int i = 0; i < lights.length(); i++) {
-        float light_distance = length(lights[i].pos - point);
-        float3 light_direction = normalize(lights[i].pos - point);
-        float3 isectPoint;
-        float3 isectNorm;
-        Material isectMaterial;
-        RayMarch(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm,
-                 light_direction, isectPoint, isectNorm, isectMaterial);
+        float intensity = 0.0;
+        float specularity = 0.0;
+        for (int i = 0; i < lights.length(); i++) {
+            float light_distance = length(lights[i].pos - point);
+            float3 light_direction = normalize(lights[i].pos - point);
+            float3 isectPoint;
+            float3 isectNorm;
+            Material isectMaterial;
+            RayMarch(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm,
+                     light_direction, isectPoint, isectNorm, isectMaterial);
 
-        if (length(isectPoint - point) >= light_distance) {
-            intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
-            reflection += lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
+            if (length(isectPoint - point) >= light_distance) {
+                intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
+                specularity += lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
+            }
+        }
+
+
+        color += ref_modifier * (material.color * intensity * albedo[0] + float4(1.0, 1.0, 1.0, 0.0) * specularity * albedo[1]);
+        ref_modifier *= albedo[2];
+        float3 ref_dir = reflect(ray_dir, norm);
+        float3 ref_start = dot(ref_dir, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm;
+
+        float3 ref_pos;
+        float3 ref_norm;
+        Material ref_material;
+        bool isForeground = RayMarch(ref_start, ref_dir, ref_pos, ref_norm, ref_material);
+        if (!isForeground) {
+            color += ref_modifier * g_bgColor;
+            break;
+        } else {
+            ray_dir = ref_dir;
+            point = ref_pos;
+            norm = ref_norm;
+            material = ref_material;
         }
     }
 
-    color = color * intensity * albedo[0] + float4(1.0, 1.0, 1.0, 0.0) * reflection * albedo[1];
-    color[3] = alpha;
-
+    color[3] = 1.0;
     return color;
 }
 

@@ -238,7 +238,7 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
             }
         }
 
-        if (dist > 100.0) {
+        if (length(point) > 1000.0) {
             object_type = -1;
             break;
         }

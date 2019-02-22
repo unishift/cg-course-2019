@@ -275,9 +275,18 @@ float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material materi
     float intensity = 0.0;
     float reflection = 0.0;
     for (int i = 0; i < lights.length(); i++) {
+        float light_distance = length(lights[i].pos - point);
         float3 light_direction = normalize(lights[i].pos - point);
-        intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
-        reflection += lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
+        float3 isectPoint;
+        float3 isectNorm;
+        Material isectMaterial;
+        RayMarch(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm,
+                 light_direction, isectPoint, isectNorm, isectMaterial);
+
+        if (length(isectPoint - point) >= light_distance) {
+            intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
+            reflection += lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
+        }
     }
 
     color = color * intensity * albedo[0] + float4(1.0, 1.0, 1.0, 0.0) * reflection * albedo[1];

@@ -26,6 +26,13 @@ struct Box {
     Material material;
 };
 
+struct Torus {
+    float3 center;
+    float2 size;
+
+    Material material;
+};
+
 struct LightSource {
     float3 pos;
     float intensity;
@@ -102,6 +109,15 @@ const Box boxes[] = Box[](
     )
 );
 
+const Torus toruses[] = Torus[](
+    Torus(
+        float3(0.0, 20.0, 0.0),
+        float2(40.0, 1.0),
+
+        red_rubber
+    )
+);
+
 float3 EyeRayDir(float x, float y, float w, float h)
 {
 	float fov = 3.141592654f/(2.0f);
@@ -120,6 +136,11 @@ float IntersectSphere(float3 pos, Sphere sphere) {
 
 float IntersectBox(float3 pos, Box box) {
     return length(max(abs(pos - box.center) - box.size, 0.0));
+}
+
+float IntersectTorus(float3 pos, Torus torus) {
+    float2 q = float2(length((pos - torus.center).xz) - torus.size.x, pos.y);
+    return length(q)-torus.size.y;
 }
 
 float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
@@ -152,9 +173,24 @@ float3 EstimateNormalBox(float3 z, float eps, Box box) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
+    float3 z1 = z + float3(eps, 0, 0);
+    float3 z2 = z - float3(eps, 0, 0);
+    float3 z3 = z + float3(0, eps, 0);
+    float3 z4 = z - float3(0, eps, 0);
+    float3 z5 = z + float3(0, 0, eps);
+    float3 z6 = z - float3(0, 0, eps);
+
+    float dx = IntersectTorus(z1, torus) - IntersectTorus(z2, torus);
+    float dy = IntersectTorus(z3, torus) - IntersectTorus(z4, torus);
+    float dz = IntersectTorus(z5, torus) - IntersectTorus(z6, torus);
+
+    return normalize(float3(dx, dy, dz) / (2.0*eps));
+}
 
 const int SPHERE = 0;
 const int BOX = 1;
+const int TORUS = 2;
 // Find first ray intersection with object
 // Return position, norm to object and material of object
 bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm, out Material material) {
@@ -186,6 +222,16 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
             }
         }
 
+        // Check toruses
+        for (int i = 0; i < toruses.length(); i++) {
+            float tmp = IntersectTorus(point, toruses[i]);
+            if (tmp < dist) {
+                dist = tmp;
+                object_type = TORUS;
+                object_index = i;
+            }
+        }
+
         if (dist > 100.0) {
             object_type = -1;
             break;
@@ -202,6 +248,10 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
         case BOX:
             norm = EstimateNormalBox(point, EPS, boxes[object_index]);
             material = boxes[object_index].material;
+            break;
+        case TORUS:
+            norm = EstimateNormalTorus(point, EPS, toruses[object_index]);
+            material = toruses[object_index].material;
             break;
         case -1:
             return false;

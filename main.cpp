@@ -287,6 +287,8 @@ int main(int argc, char **argv) {
         program.SetUniform("g_screenWidth", WIDTH);
         program.SetUniform("g_screenHeight", HEIGHT);
 
+        program.SetUniform("g_time", i);
+
 
         // очистка и заполнение экрана цветом
         //

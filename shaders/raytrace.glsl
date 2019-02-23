@@ -20,6 +20,8 @@ uniform int g_screenHeight;
 
 uniform float4x4 g_rayMatrix;
 
+uniform int g_time;
+
 uniform float4 g_bgColor = float4(0.5, 0.5, 0.5, 1.0);
 
 const float EPS = 1e-2;
@@ -120,7 +122,7 @@ struct Torus {
 };
 
 float IntersectTorus(float3 pos, Torus torus) {
-    float2 q = float2(length((pos - torus.center).xz) - torus.size.x, pos.y);
+    float2 q = float2(length(pos.xz - torus.center.xz) - torus.size.x, pos.y- torus.center.y);
     return length(q)-torus.size.y;
 }
 
@@ -142,10 +144,12 @@ float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
 
 // Scene layout
 
-uniform LightSource lights[] = LightSource[](
+float time_mod = float(g_time - 50) / 50 * 3.14159265 * 4;
+
+LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, 4.0, 10.0),
-        2.0
+        1.0 + sin(time_mod / 4)
     ),
     LightSource(
         float3(10.0, 20.0, 1.0),
@@ -153,18 +157,19 @@ uniform LightSource lights[] = LightSource[](
     )
 );
 
-uniform Sphere spheres[] = Sphere[](
+Sphere spheres[] = Sphere[](
     Sphere(
-        float3(0.0, 0.0, 0.0),
+        float3(0.0, cos(time_mod / 2), 0.0),
         3.0,
 
-        mirror
+        gold
     ),
     Sphere(
-        float3(4.0, 5.0, 1.5),
+//        float3(4.0, 5.0, 1.5),
+        6.5765 * float3(0.707 * cos(time_mod / 4), 0.707 * cos(time_mod / 4), -2.5 * sin(time_mod / 4)),
         2.0,
 
-        gold
+        mirror
     )
 );
 
@@ -179,19 +184,19 @@ uniform Box boxes[] = Box[](
         float3(-8.0, 5.0, -10.0),
         float3(1.0, 3.0, 1.0),
 
-        ivory
+        gold
     ),
     Box(
         float3(0.0, -10.0, 0.0),
         float3(30.0, 0.1, 30.0),
 
-        gold
+        ivory
     )
 );
 
-uniform Torus toruses[] = Torus[](
+Torus toruses[] = Torus[](
     Torus(
-        float3(0.0, 20.0, 0.0),
+        float3(0.0, cos(time_mod / 2 - 0.4), 0.0),
         float2(10.0, 0.4),
 
         red_rubber
@@ -255,7 +260,7 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
             }
         }
 
-        if (length(point) > 1000.0) {
+        if (length(point) > 100.0) {
             object_type = -1;
             break;
         }

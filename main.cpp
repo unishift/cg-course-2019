@@ -154,6 +154,9 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
                 setDefaultSettings();
             }
             break;
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
         default:
             break;
     }

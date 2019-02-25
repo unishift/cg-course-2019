@@ -219,54 +219,65 @@ float3 EyeRayDir(float x, float y, float w, float h)
 const int SPHERE = 0;
 const int BOX = 1;
 const int TORUS = 2;
+const float MAX_DIST = 1000.0;
 // Find first ray intersection with object
-// Return position, norm to object and material of object
-bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm, out Material material) {
-    point = ray_pos;
+// Return intersection point, type and index of object
+float GetMinimalDistance(float3 point, out int type, out int index) {
 
-    float dist = 10000.0;
+    float dist = MAX_DIST;
+    type = -1;
+    // Check spheres
+    for (int i = 0; i < spheres.length(); i++) {
+        float tmp = IntersectSphere(point, spheres[i]);
+        if (tmp < dist) {
+            dist = tmp;
+            type = SPHERE;
+            index = i;
+        }
+    }
+
+    // Check boxes
+    for (int i = 0; i < boxes.length(); i++) {
+        float tmp = IntersectBox(point, boxes[i]);
+        if (tmp < dist) {
+            dist = tmp;
+            type = BOX;
+            index = i;
+        }
+    }
+
+    // Check toruses
+    for (int i = 0; i < toruses.length(); i++) {
+        float tmp = IntersectTorus(point, toruses[i]);
+        if (tmp < dist) {
+            dist = tmp;
+            type = TORUS;
+            index = i;
+        }
+    }
+
+    return dist;
+}
+
+// Return position, norm to object and material of object
+bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm, out Material material) {
     int object_type;
     int object_index;
-    while (dist > EPS) {
-        dist = 10000.0;
-
-        // Check spheres
-        for (int i = 0; i < spheres.length(); i++) {
-            float tmp = IntersectSphere(point, spheres[i]);
-            if (tmp < dist) {
-                dist = tmp;
-                object_type = SPHERE;
-                object_index = i;
-            }
-        }
-
-        // Check boxes
-        for (int i = 0; i < boxes.length(); i++) {
-            float tmp = IntersectBox(point, boxes[i]);
-            if (tmp < dist) {
-                dist = tmp;
-                object_type = BOX;
-                object_index = i;
-            }
-        }
-
-        // Check toruses
-        for (int i = 0; i < toruses.length(); i++) {
-            float tmp = IntersectTorus(point, toruses[i]);
-            if (tmp < dist) {
-                dist = tmp;
-                object_type = TORUS;
-                object_index = i;
-            }
-        }
-
-        if (length(point) > 100.0) {
-            object_type = -1;
+    float step = 0.0;
+    while (true) {
+        float min_dist = GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index);
+        if (min_dist < EPS) {
             break;
         }
 
-        point += dist * ray_dir;
+        step += min_dist;
+
+        if (step > MAX_DIST || object_type == -1) {
+            object_type = -1;
+            break;
+        }
     }
+    point = ray_pos + step * ray_dir;
 
     switch (object_type) {
         case SPHERE:
@@ -288,6 +299,30 @@ bool RayMarch(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm,
     return true;
 }
 
+float GetShadowCoefficient(float3 ray_pos, float3 ray_dir) {
+    int object_type;
+    int object_index;
+
+    float step = 0.0;
+    float shadow_coef = 1.0;
+    while (step < MAX_DIST) {
+        float min_dist = GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index);
+        if (min_dist < EPS) {
+            return 0.0;
+        }
+
+        const float k = 16;
+        shadow_coef = min(shadow_coef, k * min_dist / step);
+        step += min_dist;
+    }
+
+    return shadow_coef;
+}
+
+float4 CalculateBackground(float3 ray_dir) {
+    return g_bgColor;
+}
+
 // Calculate color for point considering light sources
 float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material material) {
     float ref_modifier = 1.0;
@@ -300,30 +335,24 @@ float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material materi
         for (int i = 0; i < lights.length(); i++) {
             float light_distance = length(lights[i].pos - point);
             float3 light_direction = normalize(lights[i].pos - point);
-            float3 isectPoint;
-            float3 isectNorm;
-            Material isectMaterial;
-            RayMarch(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm,
-                     light_direction, isectPoint, isectNorm, isectMaterial);
+            float shadow_coef = GetShadowCoefficient(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm, light_direction);
 
-            if (length(isectPoint - point) >= light_distance) {
-                intensity += lights[i].intensity * max(0.0, dot(light_direction, norm));
-                specularity += lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
-            }
+            intensity += shadow_coef * lights[i].intensity * max(0.0, dot(light_direction, norm));
+            specularity += shadow_coef * lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
         }
 
 
         color += ref_modifier * (material.color * intensity * albedo[0] + float4(1.0, 1.0, 1.0, 0.0) * specularity * albedo[1]);
-        ref_modifier *= albedo[2];
         float3 ref_dir = reflect(ray_dir, norm);
         float3 ref_start = dot(ref_dir, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm;
 
         float3 ref_pos;
         float3 ref_norm;
         Material ref_material;
-        bool isForeground = RayMarch(ref_start, ref_dir, ref_pos, ref_norm, ref_material);
+        bool isForeground = GetIntersectionParameters(ref_start, ref_dir, ref_pos, ref_norm, ref_material);
+        ref_modifier *= albedo[2];
         if (!isForeground) {
-            color += ref_modifier * g_bgColor;
+            color += ref_modifier * CalculateBackground(ref_dir);
             break;
         } else {
             ray_dir = ref_dir;
@@ -357,9 +386,9 @@ void main(void)
     float3 isectPoint;
     float3 isectNorm;
     Material isectMaterial;
-    bool isForeground = RayMarch(ray_pos, ray_dir, isectPoint, isectNorm, isectMaterial);
+    bool isForeground = GetIntersectionParameters(ray_pos, ray_dir, isectPoint, isectNorm, isectMaterial);
     if (!isForeground) {
-        fragColor = g_bgColor;
+        fragColor = CalculateBackground(ray_dir);
     } else {
         fragColor = CalculateColor(ray_dir, isectPoint, isectNorm, isectMaterial);
     }

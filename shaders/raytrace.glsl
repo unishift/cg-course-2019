@@ -21,6 +21,7 @@ uniform int g_screenHeight;
 uniform float4x4 g_rayMatrix;
 
 uniform int g_time;
+uniform samplerCube skybox;
 
 uniform float4 g_bgColor = float4(0.5, 0.5, 0.5, 1.0);
 
@@ -320,7 +321,7 @@ float GetShadowCoefficient(float3 ray_pos, float3 ray_dir) {
 }
 
 float4 CalculateBackground(float3 ray_dir) {
-    return g_bgColor;
+    return texture(skybox, -ray_dir);
 }
 
 // Calculate color for point considering light sources

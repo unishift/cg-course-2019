@@ -8,7 +8,11 @@
 #include <GLFW/glfw3.h>
 #include <random>
 
-static GLsizei WIDTH = 1280, HEIGHT = 720; //размеры окна
+#define ILUT_USE_OPENGL
+#include <IL/il.h>
+#include <IL/ilut.h>
+
+static GLsizei WIDTH = 512, HEIGHT = 512; //размеры окна
 
 using namespace LiteMath;
 
@@ -178,6 +182,36 @@ int initGL() {
     return 0;
 }
 
+uint loadSkybox(const std::vector<std::string>& file_names) {
+    uint id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+
+    for (int i = 0; i < file_names.size(); i++) {
+        uint image = ilGenImage();
+        ilBindImage(image);
+        ilLoadImage(file_names[i].c_str());
+
+        const int w = ilGetInteger(IL_IMAGE_WIDTH);
+        const int h = ilGetInteger(IL_IMAGE_HEIGHT);
+        const int format = ilGetInteger(IL_IMAGE_FORMAT);
+        const int type = ilGetInteger(IL_IMAGE_TYPE);
+
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                     0, GL_RGB, w, h, 0, format, type, ilGetData());
+
+        ilDeleteImage(image);
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return id;
+}
+
 int main(int argc, char **argv) {
     if (!glfwInit())
         return -1;
@@ -261,6 +295,23 @@ int main(int argc, char **argv) {
         glBindVertexArray(0);
     }
 
+    // Initialize DevIL and load textures
+    ilInit();
+    if (ilGetError() != IL_NO_ERROR) {
+        return -1;
+    }
+
+    const std::string path("../skybox/mp_hexagon/hexagon");
+    const std::string ext(".tga");
+    auto skybox = loadSkybox({
+                             path + "_ft" + ext,
+                             path + "_bk" + ext,
+                             path + "_dn" + ext,
+                             path + "_up" + ext,
+                             path + "_rt" + ext,
+                             path + "_lf" + ext,
+                             });
+
     //цикл обработки сообщений и отрисовки сцены каждый кадр
     GLsizei i = 0;
     double current_time = glfwGetTime();
@@ -292,6 +343,7 @@ int main(int argc, char **argv) {
 
         program.SetUniform("g_time", i);
 
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
 
         // очистка и заполнение экрана цветом
         //

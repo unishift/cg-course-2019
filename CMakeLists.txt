@@ -33,7 +33,8 @@ endif()
 
 include_directories(${ADDITIONAL_INCLUDE_DIRS})
 
-find_package(OpenGL REQUIRED)
+include(FindOpenGL)
+include(FindDevIL)
 
 add_executable(main ${SOURCE_FILES})
 
@@ -48,9 +49,9 @@ if(WIN32)
     add_custom_command(TARGET main POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/dependencies/bin" $<TARGET_FILE_DIR:main>)
     #set(CMAKE_MSVCIDE_RUN_PATH ${ADDITIONAL_RUNTIME_LIBRARY_DIRS})
     target_compile_options(main PRIVATE)
-    target_link_libraries(main LINK_PUBLIC ${OPENGL_gl_LIBRARY} glfw3dll)
+    target_link_libraries(main LINK_PUBLIC ${OPENGL_LIBRARIES} glfw3dll ${IL_LIBRARIES} ${ILUT_LIBRARIES})
 else()
     target_compile_options(main PRIVATE -Wnarrowing)
-    target_link_libraries(main LINK_PUBLIC ${OPENGL_gl_LIBRARY} glfw rt dl)
+    target_link_libraries(main LINK_PUBLIC ${OPENGL_LIBRARIES} glfw rt dl ${IL_LIBRARIES} ${ILUT_LIBRARIES})
 endif()
 

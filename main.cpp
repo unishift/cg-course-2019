@@ -50,6 +50,8 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     if (permitMouseMove) {
         cam_rot[0] -= y1 - my;
         cam_rot[1] -= x1 - mx;
+        constexpr float pi_2 = DEG_TO_RAD * 90;
+        cam_rot[0] = std::max(-pi_2, std::min(pi_2, cam_rot[0]));
     }
 
     mx = x1;

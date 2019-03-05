@@ -97,7 +97,8 @@ struct Box {
 };
 
 float IntersectBox(float3 pos, Box box) {
-    return length(max(abs(pos - box.center) - box.size, 0.0));
+  float3 d = abs(pos - box.center) - box.size;
+  return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
 float3 EstimateNormalBox(float3 z, float eps, Box box) {

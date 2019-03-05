@@ -32,32 +32,44 @@ const float EPS = 1e-2;
 
 struct Material {
     float4 color;
-    float3 albedo;
+    float4 albedo;
     float exponent;
+    float refraction_index;
 };
 
 const Material ivory = Material(
     float4(0.4, 0.4, 0.4, 1.0),
-    float3(0.6, 0.3, 0.1),
-    50
+    float4(0.6, 0.3, 0.1, 0.0),
+    50,
+    1.0
 );
 
 const Material red_rubber = Material(
     float4(0.3, 0.1, 0.1, 1.0),
-    float3(0.9, 0.1, 0.0),
-    10
+    float4(0.9, 0.1, 0.0, 0.0),
+    10,
+    1.0
 );
 
 const Material gold = Material(
     4 * float4(0.24725, 0.2245, 0.0645, 1.0),
-    float3(0.3, 0.8, 0.2),
-    83.2
+    float4(0.3, 0.8, 0.2, 0.0),
+    83.2,
+    1.0
 );
 
 const Material mirror = Material(
     float4(1.0, 1.0, 1.0, 1.0),
-    float3(0.0, 10.0, 0.8),
-    1425.0
+    float4(0.0, 10.0, 0.8, 0.0),
+    1425.0,
+    1.0
+);
+
+const Material glass = Material(
+    float4(0.6, 0.7, 0.8, 1.0),
+    float4(0.01, 0.5, 0.1, 0.8),
+    125.0,
+    1.5
 );
 
 
@@ -164,7 +176,7 @@ Sphere spheres[] = Sphere[](
         float3(0.0, cos(time_mod / 2), 0.0),
         3.0,
 
-        gold
+        glass
     ),
     Sphere(
 //        float3(4.0, 5.0, 1.5),
@@ -267,7 +279,7 @@ bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir, out float3 point,
     int object_index;
     float step = 0.0;
     while (true) {
-        float min_dist = GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index);
+        float min_dist = abs(GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index));
         if (min_dist < EPS) {
             break;
         }
@@ -329,8 +341,8 @@ float4 CalculateBackground(float3 ray_dir) {
 float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material material) {
     float ref_modifier = 1.0;
     float4 color = float4(0.0, 0.0, 0.0, 1.0);
-    for (int depth = 0; depth < 2; depth++) {
-        float3 albedo = material.albedo;
+    for (int depth = 0; depth < 6; depth++) {
+        float4 albedo = material.albedo;
 
         float intensity = 0.0;
         float specularity = 0.0;
@@ -345,14 +357,31 @@ float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material materi
 
 
         color += ref_modifier * (material.color * intensity * albedo[0] + float4(1.0, 1.0, 1.0, 0.0) * specularity * albedo[1]);
-        float3 ref_dir = reflect(ray_dir, norm);
-        float3 ref_start = dot(ref_dir, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm;
+
+        float3 ref_dir;
+        float3 ref_start;
+        if (albedo[3] == 0.0) {
+            ref_dir = reflect(ray_dir, norm);
+            ref_modifier *= albedo[2];
+        } else {
+            if (dot(ray_dir, norm) < 0) {
+                ref_dir = normalize(refract(ray_dir, norm, 1.0 / material.refraction_index));
+            } else {
+                ref_dir = normalize(refract(ray_dir, -norm, material.refraction_index));
+            }
+            if (ref_dir == float3(0.0, 0.0, 0.0)) {
+                ref_dir = reflect(ray_dir, norm);
+                ref_modifier *= albedo[2];
+            } else {
+                ref_modifier *= albedo[3];
+            }
+        }
+        ref_start = dot(ref_dir, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm;
 
         float3 ref_pos;
         float3 ref_norm;
         Material ref_material;
         bool isForeground = GetIntersectionParameters(ref_start, ref_dir, ref_pos, ref_norm, ref_material);
-        ref_modifier *= albedo[2];
         if (!isForeground) {
             color += ref_modifier * CalculateBackground(ref_dir);
             break;

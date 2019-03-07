@@ -411,12 +411,22 @@ float AmbientOcclusion(float3 point, float3 norm) {
 }
 
 // Calculate color for point considering light sources
-float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material material) {
+float4 CalculateColor(float3 ray_dir, float3 point) {
+    float3 norm;
+    Material material;
     float ref_modifier = 1.0;
     float4 color = float4(0.0, 0.0, 0.0, 1.0);
-    for (int depth = 0; depth < 6; depth++) {
-        float4 albedo = material.albedo;
+    for (int depth = 0; depth < 4; depth++) {
+        float3 ref_point;
+        bool isForeground = GetIntersectionParameters(point, ray_dir, ref_point, norm, material);
+        if (!isForeground) {
+            color += ref_modifier * CalculateBackground(ray_dir);
+            break;
+        } else {
+            point = ref_point;
+        }
 
+        float4 albedo = material.albedo;
         float intensity = AmbientOcclusion(point, norm);
         float specularity = 0.0;
         for (int i = 0; i < lights.length(); i++) {
@@ -451,19 +461,8 @@ float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material materi
         }
         ref_start = dot(ref_dir, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm;
 
-        float3 ref_pos;
-        float3 ref_norm;
-        Material ref_material;
-        bool isForeground = GetIntersectionParameters(ref_start, ref_dir, ref_pos, ref_norm, ref_material);
-        if (!isForeground) {
-            color += ref_modifier * CalculateBackground(ref_dir);
-            break;
-        } else {
-            ray_dir = ref_dir;
-            point = ref_pos;
-            norm = ref_norm;
-            material = ref_material;
-        }
+        ray_dir = ref_dir;
+        point = ref_start;
     }
 
     color[3] = 1.0;
@@ -487,14 +486,6 @@ void main(void)
     ray_pos = (g_rayMatrix*float4(ray_pos,1)).xyz;
     ray_dir = float3x3(g_rayMatrix)*ray_dir;
 
-    float3 isectPoint;
-    float3 isectNorm;
-    Material isectMaterial;
-    bool isForeground = GetIntersectionParameters(ray_pos, ray_dir, isectPoint, isectNorm, isectMaterial);
-    if (!isForeground) {
-        fragColor = CalculateBackground(ray_dir);
-    } else {
-        fragColor = CalculateColor(ray_dir, isectPoint, isectNorm, isectMaterial);
-    }
+    fragColor = CalculateColor(ray_dir, ray_pos);
 }
 

@@ -155,6 +155,50 @@ float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
     return normalize(float3(dx, dy, dz) / (2.0*eps));
 }
 
+struct MSponge {
+    float3 center;
+    float3 size;
+
+    Material material;
+};
+
+float IntersectMSponge(float3 pos, MSponge msponge) {
+   pos -= msponge.center;
+   float d = IntersectBox(pos, Box(vec3(0.0), msponge.size, gold));
+
+   float s = 1.0;
+   for(int m = 0; m < 3; m++)
+   {
+      vec3 a = mod(pos * s, 2.0) - 1.0;
+      s *= 3.0;
+      vec3 r = abs(1.0 - 3.0 * abs(a));
+
+      float da = max(r.x, r.y);
+      float db = max(r.y, r.z);
+      float dc = max(r.z, r.x);
+      float c = (min(da, min(db, dc)) - 1.0) / s;
+
+      d = max(d, c);
+   }
+
+   return d;
+}
+
+float3 EstimateNormalMSponge(float3 z, float eps, MSponge msponge) {
+    float3 z1 = z + float3(eps, 0, 0);
+    float3 z2 = z - float3(eps, 0, 0);
+    float3 z3 = z + float3(0, eps, 0);
+    float3 z4 = z - float3(0, eps, 0);
+    float3 z5 = z + float3(0, 0, eps);
+    float3 z6 = z - float3(0, 0, eps);
+
+    float dx = IntersectMSponge(z1, msponge) - IntersectMSponge(z2, msponge);
+    float dy = IntersectMSponge(z3, msponge) - IntersectMSponge(z4, msponge);
+    float dz = IntersectMSponge(z5, msponge) - IntersectMSponge(z6, msponge);
+
+    return normalize(float3(dx, dy, dz) / (2.0*eps));
+}
+
 
 // Scene layout
 
@@ -217,6 +261,15 @@ Torus toruses[] = Torus[](
     )
 );
 
+MSponge sponges[] = MSponge[](
+    MSponge(
+        float3(20.0, 0.0, 0.0),
+        float3(4.0 + 2 * cos(time_mod / 2), 4.0 + 2 * sin(time_mod / 4), 2.0),
+
+        gold
+    )
+);
+
 
 float3 EyeRayDir(float x, float y, float w, float h)
 {
@@ -233,6 +286,7 @@ float3 EyeRayDir(float x, float y, float w, float h)
 const int SPHERE = 0;
 const int BOX = 1;
 const int TORUS = 2;
+const int MSPONGE = 3;
 const float MAX_DIST = 1000.0;
 // Find first ray intersection with object
 // Return intersection point, type and index of object
@@ -266,6 +320,16 @@ float GetMinimalDistance(float3 point, out int type, out int index) {
         if (tmp < dist) {
             dist = tmp;
             type = TORUS;
+            index = i;
+        }
+    }
+
+    // Check sponges
+    for (int i = 0; i < sponges.length(); i++) {
+        float tmp = IntersectMSponge(point, sponges[i]);
+        if (tmp < dist) {
+            dist = tmp;
+            type = MSPONGE;
             index = i;
         }
     }
@@ -305,6 +369,10 @@ bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir, out float3 point,
         case TORUS:
             norm = EstimateNormalTorus(point, EPS, toruses[object_index]);
             material = toruses[object_index].material;
+            break;
+        case MSPONGE:
+            norm = EstimateNormalMSponge(point, EPS, sponges[object_index]);
+            material = sponges[object_index].material;
             break;
         case -1:
             return false;

@@ -337,6 +337,11 @@ float4 CalculateBackground(float3 ray_dir) {
     return texture(skybox, -ray_dir);
 }
 
+float AmbientOcclusion(float3 point, float3 norm) {
+    int type, index;
+    return GetMinimalDistance(point + 0.5 * norm, type, index) / 0.5;
+}
+
 // Calculate color for point considering light sources
 float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material material) {
     float ref_modifier = 1.0;
@@ -344,7 +349,7 @@ float4 CalculateColor(float3 ray_dir, float3 point, float3 norm, Material materi
     for (int depth = 0; depth < 6; depth++) {
         float4 albedo = material.albedo;
 
-        float intensity = 0.0;
+        float intensity = AmbientOcclusion(point, norm);
         float specularity = 0.0;
         for (int i = 0; i < lights.length(); i++) {
             float light_distance = length(lights[i].pos - point);

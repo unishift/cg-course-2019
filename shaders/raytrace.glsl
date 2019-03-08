@@ -27,6 +27,12 @@ uniform float4 g_bgColor = float4(0.5, 0.5, 0.5, 1.0);
 
 const float EPS = 1e-2;
 
+// Settings
+uniform bool g_softShadows;
+uniform bool g_reflect;
+uniform bool g_refract;
+uniform bool g_ambient;
+
 
 // Materials
 
@@ -202,7 +208,7 @@ float3 EstimateNormalMSponge(float3 z, float eps, MSponge msponge) {
 
 // Scene layout
 
-float time_mod = float(g_time - 50) / 50 * 3.14159265 * 4;
+float time_mod = g_time / 5.0;
 
 LightSource lights[] = LightSource[](
     LightSource(
@@ -394,7 +400,9 @@ float GetShadowCoefficient(float3 ray_pos, float3 ray_dir) {
         }
 
         const float k = 16;
-        shadow_coef = min(shadow_coef, k * min_dist / step);
+        if (g_softShadows) {
+            shadow_coef = min(shadow_coef, k * min_dist / step);
+        }
         step += min_dist;
     }
 
@@ -407,7 +415,11 @@ float4 CalculateBackground(float3 ray_dir) {
 
 float AmbientOcclusion(float3 point, float3 norm) {
     int type, index;
-    return GetMinimalDistance(point + 0.5 * norm, type, index) / 0.5;
+    if (g_ambient) {
+        return GetMinimalDistance(point + 0.5 * norm, type, index) / 0.5;
+    } else {
+        return 1.0;
+    }
 }
 
 // Calculate color for point considering light sources
@@ -444,15 +456,24 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
         float3 ref_dir;
         float3 ref_start;
         if (albedo[3] == 0.0) {
+            if (!g_reflect) {
+                break;
+            }
             ref_dir = reflect(ray_dir, norm);
             ref_modifier *= albedo[2];
         } else {
+            if (!g_refract) {
+                break;
+            }
             if (dot(ray_dir, norm) < 0) {
                 ref_dir = normalize(refract(ray_dir, norm, 1.0 / material.refraction_index));
             } else {
                 ref_dir = normalize(refract(ray_dir, -norm, material.refraction_index));
             }
-            if (ref_dir == float3(0.0, 0.0, 0.0)) {
+            if (ref_dir == float3(0.0)) {
+                if (!g_reflect) {
+                    break;
+                }
                 ref_dir = reflect(ray_dir, norm);
                 ref_modifier *= albedo[2];
             } else {

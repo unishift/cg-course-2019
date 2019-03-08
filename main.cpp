@@ -27,6 +27,13 @@ const float3 forward(0.0f, 0.0f, -scale);
 const float3 left(-scale, 0.0f, 0.0f);
 const float3 up(0.0f, scale, 0.0f);
 
+// Settings
+static bool inc_time = true;
+static bool g_softShadows = true;
+static bool g_reflect = true;
+static bool g_refract = true;
+static bool g_ambient = true;
+
 void setDefaultSettings() {
     g_camPos = g_camPos_default;
     cam_rot[0] = 0.0f; cam_rot[1] = 0.0f; cam_rot[2] = 0.0f;
@@ -157,7 +164,36 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
             break;
         case GLFW_KEY_SPACE:
             if (action == GLFW_PRESS) {
+                inc_time = !inc_time;
+            }
+            break;
+        case GLFW_KEY_0:
+            if (action == GLFW_PRESS) {
                 setDefaultSettings();
+                g_softShadows = true;
+                g_reflect = true;
+                g_refract = true;
+                g_ambient = true;
+            }
+            break;
+        case GLFW_KEY_1:
+            if (action == GLFW_PRESS) {
+                g_softShadows = !g_softShadows;
+            }
+            break;
+        case GLFW_KEY_2:
+            if (action == GLFW_PRESS) {
+                g_reflect = !g_reflect;
+            }
+            break;
+        case GLFW_KEY_3:
+            if (action == GLFW_PRESS) {
+                g_refract = !g_refract;
+            }
+            break;
+        case GLFW_KEY_4:
+            if (action == GLFW_PRESS) {
+                g_ambient = !g_ambient;
             }
             break;
         case GLFW_KEY_ESCAPE:
@@ -315,7 +351,8 @@ int main(int argc, char **argv) {
                              });
 
     //цикл обработки сообщений и отрисовки сцены каждый кадр
-    GLsizei i = 0;
+    unsigned frame_index = 0;
+    GLsizei g_time = 0;
     double current_time = glfwGetTime();
     double next_time = 0;
     while (!glfwWindowShouldClose(window)) {
@@ -343,7 +380,15 @@ int main(int argc, char **argv) {
         program.SetUniform("g_screenWidth", WIDTH);
         program.SetUniform("g_screenHeight", HEIGHT);
 
-        program.SetUniform("g_time", i);
+        program.SetUniform("g_time", g_time);
+        if (inc_time) {
+            g_time++;
+        }
+
+        program.SetUniform("g_softShadows", g_softShadows);
+        program.SetUniform("g_reflect", g_reflect);
+        program.SetUniform("g_refract", g_refract);
+        program.SetUniform("g_ambient", g_ambient);
 
         glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
 
@@ -363,14 +408,14 @@ int main(int argc, char **argv) {
         program.StopUseShader();
 
         glfwSwapBuffers(window);
-        i = (i + 1) % 100;
+        frame_index = (frame_index + 1) % 60;
 
         // Print fps
-        if (i == 0) {
+        if (frame_index == 0) {
             next_time = glfwGetTime();
             const double elapsed_time = next_time - current_time;
             current_time = next_time;
-            const std::string title = "RayTrace task -- FPS " + std::to_string(int(100 / elapsed_time));
+            const std::string title = "RayTrace task -- FPS " + std::to_string(int(60.0 / elapsed_time));
             glfwSetWindowTitle(window, title.c_str());
         }
     }

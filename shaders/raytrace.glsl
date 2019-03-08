@@ -302,7 +302,7 @@ float GetMinimalDistance(float3 point, out int type, out int index) {
     type = -1;
     // Check spheres
     for (int i = 0; i < spheres.length(); i++) {
-        float tmp = IntersectSphere(point, spheres[i]);
+        float tmp = abs(IntersectSphere(point, spheres[i]));
         if (tmp < dist) {
             dist = tmp;
             type = SPHERE;
@@ -312,7 +312,7 @@ float GetMinimalDistance(float3 point, out int type, out int index) {
 
     // Check boxes
     for (int i = 0; i < boxes.length(); i++) {
-        float tmp = IntersectBox(point, boxes[i]);
+        float tmp = abs(IntersectBox(point, boxes[i]));
         if (tmp < dist) {
             dist = tmp;
             type = BOX;
@@ -322,7 +322,7 @@ float GetMinimalDistance(float3 point, out int type, out int index) {
 
     // Check toruses
     for (int i = 0; i < toruses.length(); i++) {
-        float tmp = IntersectTorus(point, toruses[i]);
+        float tmp = abs(IntersectTorus(point, toruses[i]));
         if (tmp < dist) {
             dist = tmp;
             type = TORUS;
@@ -332,7 +332,7 @@ float GetMinimalDistance(float3 point, out int type, out int index) {
 
     // Check sponges
     for (int i = 0; i < sponges.length(); i++) {
-        float tmp = IntersectMSponge(point, sponges[i]);
+        float tmp = abs(IntersectMSponge(point, sponges[i]));
         if (tmp < dist) {
             dist = tmp;
             type = MSPONGE;
@@ -349,7 +349,7 @@ bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir, out float3 point,
     int object_index;
     float step = 0.0;
     while (true) {
-        float min_dist = abs(GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index));
+        float min_dist = GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index);
         if (min_dist < EPS) {
             break;
         }

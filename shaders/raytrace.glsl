@@ -466,9 +466,9 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
                 break;
             }
             if (dot(ray_dir, norm) < 0) {
-                ref_dir = normalize(refract(ray_dir, norm, 1.0 / material.refraction_index));
+                ref_dir = refract(ray_dir, norm, 1.0 / material.refraction_index);
             } else {
-                ref_dir = normalize(refract(ray_dir, -norm, material.refraction_index));
+                ref_dir = refract(ray_dir, -norm, material.refraction_index);
             }
             if (ref_dir == float3(0.0)) {
                 if (!g_reflect) {
@@ -482,7 +482,7 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
         }
         ref_start = dot(ref_dir, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm;
 
-        ray_dir = ref_dir;
+        ray_dir = normalize(ref_dir);
         point = ref_start;
     }
 

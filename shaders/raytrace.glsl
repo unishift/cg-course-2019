@@ -32,6 +32,7 @@ uniform bool g_softShadows;
 uniform bool g_reflect;
 uniform bool g_refract;
 uniform bool g_ambient;
+uniform bool g_antiAlias;
 
 
 // Materials
@@ -499,14 +500,24 @@ void main(void)
     float x = fragmentTexCoord.x*w;
     float y = fragmentTexCoord.y*h;
 
-    // generate initial ray
-    float3 ray_pos = float3(0,0,0);
-    float3 ray_dir = EyeRayDir(x,y,w,h);
+    float3 ray_pos = (g_rayMatrix * float4(0.0, 0.0, 0.0, 1.0)).xyz;
+    float3x3 rot_mat = float3x3(g_rayMatrix);
 
-    // transorm ray with matrix
-    ray_pos = (g_rayMatrix*float4(ray_pos,1)).xyz;
-    ray_dir = float3x3(g_rayMatrix)*ray_dir;
+    if (g_antiAlias) {
+        float3 ray_dir0 = rot_mat * EyeRayDir(x - 0.25, y - 0.25, w, h);
+        float3 ray_dir1 = rot_mat * EyeRayDir(x + 0.25, y - 0.25, w, h);
+        float3 ray_dir2 = rot_mat * EyeRayDir(x - 0.25, y + 0.25, w, h);
+        float3 ray_dir3 = rot_mat * EyeRayDir(x + 0.25, y + 0.25, w, h);
 
-    fragColor = CalculateColor(ray_dir, ray_pos);
+        fragColor = (CalculateColor(ray_dir0, ray_pos) +
+                     CalculateColor(ray_dir1, ray_pos) +
+                     CalculateColor(ray_dir2, ray_pos) +
+                     CalculateColor(ray_dir3, ray_pos)) / 4.0;
+    } else {
+        float3 ray_dir = rot_mat * EyeRayDir(x, y, w, h);
+
+        fragColor = CalculateColor(ray_dir, ray_pos);
+    }
+
 }
 

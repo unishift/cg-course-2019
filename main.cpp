@@ -33,6 +33,7 @@ static bool g_softShadows = true;
 static bool g_reflect = true;
 static bool g_refract = true;
 static bool g_ambient = true;
+static bool g_antiAlias = false;
 
 void setDefaultSettings() {
     g_camPos = g_camPos_default;
@@ -194,6 +195,11 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
         case GLFW_KEY_4:
             if (action == GLFW_PRESS) {
                 g_ambient = !g_ambient;
+            }
+            break;
+        case GLFW_KEY_5:
+            if (action == GLFW_PRESS) {
+                g_antiAlias = !g_antiAlias;
             }
             break;
         case GLFW_KEY_ESCAPE:
@@ -389,6 +395,7 @@ int main(int argc, char **argv) {
         program.SetUniform("g_reflect", g_reflect);
         program.SetUniform("g_refract", g_refract);
         program.SetUniform("g_ambient", g_ambient);
+        program.SetUniform("g_antiAlias", g_antiAlias);
 
         glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
 

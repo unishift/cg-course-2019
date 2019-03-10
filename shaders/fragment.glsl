@@ -68,7 +68,7 @@ const Material mirror = Material(
 
 const Material glass = Material(
     float4(0.6, 0.7, 0.8, 1.0),
-    float4(0.01, 0.5, 0.1, 0.8),
+    float4(0.0, 0.5, 0.8, 0.8),
     125.0,
     1.5
 );
@@ -222,10 +222,10 @@ float3 EstimateNormalMSponge(float3 z, float eps, MSponge msponge) {
 
 // Scene layout
 
-LightSource lights[] = LightSource[](
+const LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, 4.0, 10.0),
-        1.0 + sin(g_time / 20.0)
+        2.0
     ),
     LightSource(
         float3(10.0, 20.0, 1.0),
@@ -241,14 +241,14 @@ Sphere spheres[] = Sphere[](
         glass
     ),
     Sphere(
-        6.5765 * float3(0.707 * cos(g_time / 20.0), 0.707 * cos(g_time / 20.0), -2.5 * sin(g_time / 20.0)),
+        6.5765 * float3(0.707 * cos(g_time / 100.0), 0.707 * cos(g_time / 100.0), -2.5 * sin(g_time / 100.0)),
         2.0,
 
         mirror
     )
 );
 
-uniform Box boxes[] = Box[](
+const Box boxes[] = Box[](
     Box(
         float3(8.0, 5.0, -10.0),
         float3(3.0, 1.0, 1.0),
@@ -266,6 +266,12 @@ uniform Box boxes[] = Box[](
         float3(30.0, 0.1, 30.0),
 
         ivory
+    ),
+    Box(
+        float3(-20.0, 0.0, 0.0),
+        float3(4.0, 4.0, 4.0),
+
+        glass
     )
 );
 
@@ -278,7 +284,7 @@ Torus toruses[] = Torus[](
     )
 );
 
-MSponge sponges[] = MSponge[](
+const MSponge sponges[] = MSponge[](
     MSponge(
         float3(20.0, 0.0, 0.0),
         float3(4.0, 4.0, 4.0),

@@ -271,7 +271,7 @@ Torus toruses[] = Torus[](
 MSponge sponges[] = MSponge[](
     MSponge(
         float3(20.0, 0.0, 0.0),
-        float3(4.0 + 2 * cos(time_mod / 2), 4.0 + 2 * sin(time_mod / 4), 2.0),
+        float3(4.0, 4.0, 4.0),
 
         gold
     )

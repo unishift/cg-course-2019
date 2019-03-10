@@ -13,7 +13,7 @@ static GLsizei WIDTH = 512, HEIGHT = 512;
 
 using namespace LiteMath;
 
-const float3 g_camPos_default(0, 0, 5);
+const float3 g_camPos_default(0, 0, 55);
 float3 g_camPos = g_camPos_default;
 float cam_rot[] = {0, 0, 0};
 float mx = 0, my = 0;

@@ -440,7 +440,7 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
     Material material;
     float ref_modifier = 1.0;
     float4 color = float4(0.0, 0.0, 0.0, 1.0);
-    for (int depth = 0; depth < 4; depth++) {
+    for (int depth = 0; depth < 6; depth++) {
         float3 ref_point;
         bool isForeground = GetIntersectionParameters(point, ray_dir, ref_point, norm, material);
         if (!isForeground) {

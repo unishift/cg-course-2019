@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
     }
 
     // Load skybox texture
-    const std::string path("../skybox/mp_hexagon/hexagon");
+    const std::string path("skybox/mp_hexagon/hexagon");
     const std::string ext(".tga");
     auto skybox = loadSkybox({
                              path + "_ft" + ext,

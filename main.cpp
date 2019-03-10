@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "RayTrace task -- FPS ??", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "RayMarch task -- FPS ??", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
 
     std::unordered_map<GLenum, std::string> shaders;
     shaders[GL_VERTEX_SHADER] = "shaders/vertex.glsl";
-    shaders[GL_FRAGMENT_SHADER] = "shaders/raytrace.glsl";
+    shaders[GL_FRAGMENT_SHADER] = "shaders/fragment.glsl";
     ShaderProgram program(shaders);
     GL_CHECK_ERRORS;
 
@@ -400,7 +400,7 @@ int main(int argc, char **argv) {
             next_time = glfwGetTime();
             const double elapsed_time = next_time - current_time;
             current_time = next_time;
-            const std::string title = "RayTrace task -- FPS " + std::to_string(int(60.0 / elapsed_time));
+            const std::string title = "RayMarch task -- FPS " + std::to_string(int(60.0 / elapsed_time));
             glfwSetWindowTitle(window, title.c_str());
         }
     }

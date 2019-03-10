@@ -1,18 +1,15 @@
-//internal includes
+// Internal includes
 #include "common.h"
 #include "ShaderProgram.h"
 #include "LiteMath.h"
 
-//External dependencies
+// External dependencies
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
 #include <random>
-
-#define ILUT_USE_OPENGL
 #include <IL/il.h>
-#include <IL/ilut.h>
 
-static GLsizei WIDTH = 512, HEIGHT = 512; //размеры окна
+static GLsizei WIDTH = 512, HEIGHT = 512;
 
 using namespace LiteMath;
 
@@ -21,7 +18,6 @@ float3 g_camPos = g_camPos_default;
 float cam_rot[] = {0, 0, 0};
 float mx = 0, my = 0;
 
-//float4x4 rot_mat;
 constexpr float scale = 1.0f;
 const float3 forward(0.0f, 0.0f, -scale);
 const float3 left(-scale, 0.0f, 0.0f);
@@ -93,7 +89,6 @@ float multiplier = 1.0f;
 float3 step = {0.0f, 0.0f, 0.0f};
 float rot_step = 0.0f;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
-
     switch (key) {
         case GLFW_KEY_W:
         case GLFW_KEY_UP:
@@ -211,8 +206,6 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
 }
 
 int initGL() {
-    int res = 0;
-    //грузим функции opengl через glad
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Failed to initialize OpenGL context" << std::endl;
         return -1;
@@ -226,7 +219,7 @@ int initGL() {
     return 0;
 }
 
-uint loadSkybox(const std::vector<std::string>& file_names) {
+uint loadSkybox(const std::vector<std::string> &file_names) {
     uint id;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
@@ -260,7 +253,6 @@ int main(int argc, char **argv) {
     if (!glfwInit())
         return -1;
 
-    //запрашиваем контекст opengl версии 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -285,13 +277,11 @@ int main(int argc, char **argv) {
     if (initGL() != 0)
         return -1;
 
-    //Reset any OpenGL errors which could be present for some reason
+    // Reset any OpenGL errors which could be present for some reason
     GLenum gl_error = glGetError();
     while (gl_error != GL_NO_ERROR)
         gl_error = glGetError();
 
-    //создание шейдерной программы из двух файлов с исходниками шейдеров
-    //используется класс-обертка ShaderProgram
     std::unordered_map<GLenum, std::string> shaders;
     shaders[GL_VERTEX_SHADER] = "shaders/vertex.glsl";
     shaders[GL_FRAGMENT_SHADER] = "shaders/raytrace.glsl";
@@ -300,8 +290,6 @@ int main(int argc, char **argv) {
 
     glfwSwapInterval(1); // force 60 frames per second
 
-    //Создаем и загружаем геометрию поверхности
-    //
     GLuint g_vertexBufferObject;
     GLuint g_vertexArrayObject;
     {
@@ -339,12 +327,13 @@ int main(int argc, char **argv) {
         glBindVertexArray(0);
     }
 
-    // Initialize DevIL and load textures
+    // Initialize DevIL
     ilInit();
     if (ilGetError() != IL_NO_ERROR) {
         return -1;
     }
 
+    // Load skybox texture
     const std::string path("../skybox/mp_hexagon/hexagon");
     const std::string ext(".tga");
     auto skybox = loadSkybox({
@@ -356,7 +345,7 @@ int main(int argc, char **argv) {
                              path + "_lf" + ext,
                              });
 
-    //цикл обработки сообщений и отрисовки сцены каждый кадр
+
     unsigned frame_index = 0;
     GLsizei g_time = 0;
     double current_time = glfwGetTime();
@@ -364,7 +353,6 @@ int main(int argc, char **argv) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        //очищаем экран каждый кадр
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         GL_CHECK_ERRORS;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -399,14 +387,10 @@ int main(int argc, char **argv) {
 
         glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
 
-        // очистка и заполнение экрана цветом
-        //
         glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        // draw call
-        //
         glBindVertexArray(g_vertexArrayObject);
         GL_CHECK_ERRORS;
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -417,7 +401,7 @@ int main(int argc, char **argv) {
         glfwSwapBuffers(window);
         frame_index = (frame_index + 1) % 60;
 
-        // Print fps
+        // Print fps to window title
         if (frame_index == 0) {
             next_time = glfwGetTime();
             const double elapsed_time = next_time - current_time;
@@ -427,8 +411,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    //очищаем vboи vao перед закрытием программы
-    //
     glDeleteVertexArrays(1, &g_vertexArrayObject);
     glDeleteBuffers(1, &g_vertexBufferObject);
 

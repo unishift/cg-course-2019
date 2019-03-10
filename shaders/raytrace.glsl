@@ -6,11 +6,6 @@
 #define float4x4 mat4
 #define float3x3 mat3
 
-struct LightSource {
-    float3 pos;
-    float intensity;
-};
-
 in float2 fragmentTexCoord;
 
 layout(location = 0) out vec4 fragColor;
@@ -23,9 +18,10 @@ uniform float4x4 g_rayMatrix;
 uniform int g_time;
 uniform samplerCube skybox;
 
-uniform float4 g_bgColor = float4(0.5, 0.5, 0.5, 1.0);
 
+// RayMarch parameters
 const float EPS = 1e-2;
+const float MAX_DIST = 1000.0;
 
 // Settings
 uniform bool g_softShadows;
@@ -34,9 +30,7 @@ uniform bool g_refract;
 uniform bool g_ambient;
 uniform bool g_antiAlias;
 
-
 // Materials
-
 struct Material {
     float4 color;
     float4 albedo;
@@ -81,7 +75,15 @@ const Material glass = Material(
 
 
 // Primitives
+// Most distance functions from:
+// http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
+struct LightSource {
+    float3 pos;
+    float intensity;
+};
+
+const int SPHERE = 0;
 struct Sphere {
     float3 center;
     float r;
@@ -90,7 +92,9 @@ struct Sphere {
 };
 
 float IntersectSphere(float3 pos, Sphere sphere) {
-    return length(pos - sphere.center) - sphere.r;
+    pos -= sphere.center;
+
+    return length(pos) - sphere.r;
 }
 
 float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
@@ -105,9 +109,10 @@ float3 EstimateNormalSphere(float3 z, float eps, Sphere sphere) {
     float dy = IntersectSphere(z3, sphere) - IntersectSphere(z4, sphere);
     float dz = IntersectSphere(z5, sphere) - IntersectSphere(z6, sphere);
 
-    return normalize(float3(dx, dy, dz) / (2.0*eps));
+    return normalize(float3(dx, dy, dz) / (2.0 * eps));
 }
 
+const int BOX = 1;
 struct Box {
     float3 center;
     float3 size;
@@ -116,8 +121,10 @@ struct Box {
 };
 
 float IntersectBox(float3 pos, Box box) {
-  float3 d = abs(pos - box.center) - box.size;
-  return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+    pos -= box.center;
+
+    float3 d = abs(pos) - box.size;
+    return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
 float3 EstimateNormalBox(float3 z, float eps, Box box) {
@@ -132,9 +139,10 @@ float3 EstimateNormalBox(float3 z, float eps, Box box) {
     float dy = IntersectBox(z3, box) - IntersectBox(z4, box);
     float dz = IntersectBox(z5, box) - IntersectBox(z6, box);
 
-    return normalize(float3(dx, dy, dz) / (2.0*eps));
+    return normalize(float3(dx, dy, dz) / (2.0 * eps));
 }
 
+const int TORUS = 2;
 struct Torus {
     float3 center;
     float2 size;
@@ -143,8 +151,10 @@ struct Torus {
 };
 
 float IntersectTorus(float3 pos, Torus torus) {
-    float2 q = float2(length(pos.xz - torus.center.xz) - torus.size.x, pos.y- torus.center.y);
-    return length(q)-torus.size.y;
+    pos -= torus.center;
+
+    float2 q = float2(length(pos.xz) - torus.size.x, pos.y);
+    return length(q) - torus.size.y;
 }
 
 float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
@@ -159,9 +169,10 @@ float3 EstimateNormalTorus(float3 z, float eps, Torus torus) {
     float dy = IntersectTorus(z3, torus) - IntersectTorus(z4, torus);
     float dz = IntersectTorus(z5, torus) - IntersectTorus(z6, torus);
 
-    return normalize(float3(dx, dy, dz) / (2.0*eps));
+    return normalize(float3(dx, dy, dz) / (2.0 * eps));
 }
 
+const int MSPONGE = 3;
 struct MSponge {
     float3 center;
     float3 size;
@@ -169,16 +180,18 @@ struct MSponge {
     Material material;
 };
 
+// Menger Sponge fractal
+// Distance calculation code from:
+// http://www.iquilezles.org/www/articles/menger/menger.htm
 float IntersectMSponge(float3 pos, MSponge msponge) {
    pos -= msponge.center;
-   float d = IntersectBox(pos, Box(vec3(0.0), msponge.size, gold));
+   float d = IntersectBox(pos, Box(float3(0.0), msponge.size, gold));
 
    float s = 1.0;
-   for(int m = 0; m < 3; m++)
-   {
-      vec3 a = mod(pos * s, 2.0) - 1.0;
+   for (int m = 0; m < 3; m++) {
+      float3 a = mod(pos * s, 2.0) - 1.0;
       s *= 3.0;
-      vec3 r = abs(1.0 - 3.0 * abs(a));
+      float3 r = abs(1.0 - 3.0 * abs(a));
 
       float da = max(r.x, r.y);
       float db = max(r.y, r.z);
@@ -203,18 +216,16 @@ float3 EstimateNormalMSponge(float3 z, float eps, MSponge msponge) {
     float dy = IntersectMSponge(z3, msponge) - IntersectMSponge(z4, msponge);
     float dz = IntersectMSponge(z5, msponge) - IntersectMSponge(z6, msponge);
 
-    return normalize(float3(dx, dy, dz) / (2.0*eps));
+    return normalize(float3(dx, dy, dz) / (2.0 * eps));
 }
 
 
 // Scene layout
 
-float time_mod = g_time / 5.0;
-
 LightSource lights[] = LightSource[](
     LightSource(
         float3(0.0, 4.0, 10.0),
-        1.0 + sin(time_mod / 4)
+        1.0 + sin(g_time / 20.0)
     ),
     LightSource(
         float3(10.0, 20.0, 1.0),
@@ -224,14 +235,13 @@ LightSource lights[] = LightSource[](
 
 Sphere spheres[] = Sphere[](
     Sphere(
-        float3(0.0, cos(time_mod / 2), 0.0),
+        float3(0.0, cos(g_time / 10.0), 0.0),
         3.0,
 
         glass
     ),
     Sphere(
-//        float3(4.0, 5.0, 1.5),
-        6.5765 * float3(0.707 * cos(time_mod / 4), 0.707 * cos(time_mod / 4), -2.5 * sin(time_mod / 4)),
+        6.5765 * float3(0.707 * cos(g_time / 20.0), 0.707 * cos(g_time / 20.0), -2.5 * sin(g_time / 20.0)),
         2.0,
 
         mirror
@@ -261,7 +271,7 @@ uniform Box boxes[] = Box[](
 
 Torus toruses[] = Torus[](
     Torus(
-        float3(0.0, cos(time_mod / 2 - 0.4), 0.0),
+        float3(0.0, cos(g_time / 10.0 - 0.4), 0.0),
         float2(10.0, 0.4),
 
         red_rubber
@@ -278,23 +288,17 @@ MSponge sponges[] = MSponge[](
 );
 
 
-float3 EyeRayDir(float x, float y, float w, float h)
-{
-	float fov = 3.141592654f/(2.0f);
+float3 EyeRayDir(float x, float y, float w, float h) {
+	float fov = 3.141592654f / 2.0f;
     float3 ray_dir;
 
-	ray_dir.x = x+0.5f - (w/2.0f);
-	ray_dir.y = y+0.5f - (h/2.0f);
-	ray_dir.z = -(w)/tan(fov/2.0f);
+	ray_dir.x = x + 0.5f - w / 2.0f;
+	ray_dir.y = y + 0.5f - h / 2.0f;
+	ray_dir.z = -w / tan(fov / 2.0f);
 
     return normalize(ray_dir);
 }
 
-const int SPHERE = 0;
-const int BOX = 1;
-const int TORUS = 2;
-const int MSPONGE = 3;
-const float MAX_DIST = 1000.0;
 // Find first ray intersection with object
 // Return intersection point, type and index of object
 float GetMinimalDistance(float3 point, out int type, out int index) {
@@ -345,7 +349,8 @@ float GetMinimalDistance(float3 point, out int type, out int index) {
 }
 
 // Return position, norm to object and material of object
-bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir, out float3 point, out float3 norm, out Material material) {
+bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir,
+                               out float3 point, out float3 norm, out Material material) {
     int object_type;
     int object_index;
     float step = 0.0;
@@ -449,7 +454,8 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
                                                      light_direction, light_distance);
 
             intensity += shadow_coef * lights[i].intensity * max(0.0, dot(light_direction, norm));
-            specularity += shadow_coef * lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
+            specularity += shadow_coef * lights[i].intensity *
+                           pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);
         }
 
 
@@ -457,6 +463,8 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
 
         float3 ref_dir;
         float3 ref_start;
+        // Due to a lack of recursion in glsl
+        // Objects can either only reflect or only refract
         if (albedo[3] == 0.0) {
             if (!g_reflect) {
                 break;
@@ -472,6 +480,8 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
             } else {
                 ref_dir = refract(ray_dir, -norm, material.refraction_index);
             }
+
+            // Condition refract(...) == float3(0.0) means total reflection
             if (ref_dir == float3(0.0)) {
                 if (!g_reflect) {
                     break;
@@ -498,8 +508,8 @@ void main(void)
     float h = float(g_screenHeight);
 
     // get curr pixelcoordinates
-    float x = fragmentTexCoord.x*w;
-    float y = fragmentTexCoord.y*h;
+    float x = fragmentTexCoord.x * w;
+    float y = fragmentTexCoord.y * h;
 
     float3 ray_pos = (g_rayMatrix * float4(0.0, 0.0, 0.0, 1.0)).xyz;
     float3x3 rot_mat = float3x3(g_rayMatrix);

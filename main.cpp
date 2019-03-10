@@ -25,16 +25,11 @@ const float3 up(0.0f, scale, 0.0f);
 
 // Settings
 static bool inc_time = true;
-static bool g_softShadows = true;
-static bool g_reflect = true;
-static bool g_refract = true;
-static bool g_ambient = true;
+static bool g_softShadows = false;
+static bool g_reflect = false;
+static bool g_refract = false;
+static bool g_ambient = false;
 static bool g_antiAlias = false;
-
-void setDefaultSettings() {
-    g_camPos = g_camPos_default;
-    cam_rot[0] = 0.0f; cam_rot[1] = 0.0f; cam_rot[2] = 0.0f;
-}
 
 void windowResize(GLFWwindow *window, int width, int height) {
     WIDTH = width;
@@ -165,11 +160,11 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
             break;
         case GLFW_KEY_0:
             if (action == GLFW_PRESS) {
-                setDefaultSettings();
-                g_softShadows = true;
-                g_reflect = true;
-                g_refract = true;
-                g_ambient = true;
+                g_softShadows = false;
+                g_reflect = false;
+                g_refract = false;
+                g_ambient = false;
+                g_antiAlias = false;
             }
             break;
         case GLFW_KEY_1:
@@ -265,7 +260,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    setDefaultSettings();
     glfwSetMouseButtonCallback(window, mouseButton);
     glfwSetCursorPosCallback(window, mouseMove);
     glfwSetWindowSizeCallback(window, windowResize);

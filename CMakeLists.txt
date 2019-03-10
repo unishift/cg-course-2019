@@ -40,7 +40,7 @@ add_executable(main ${SOURCE_FILES})
 
 target_include_directories(main PRIVATE ${OPENGL_INCLUDE_DIR})
 if(DEVELOP_MODE)
-    add_custom_command(TARGET main POST_BUILD COMMAND ln -sf "${PROJECT_SOURCE_DIR}/shaders" "${PROJECT_BINARY_DIR}/shaders")
+    add_custom_command(TARGET main POST_BUILD COMMAND ln -sfn "${PROJECT_SOURCE_DIR}/shaders" "${PROJECT_BINARY_DIR}/shaders")
 else()
     add_custom_command(TARGET main POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/shaders" "${PROJECT_BINARY_DIR}/shaders")
 endif()

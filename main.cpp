@@ -17,6 +17,7 @@ const float3 g_camPos_default(0, 0, 5);
 float3 g_camPos = g_camPos_default;
 float cam_rot[] = {0, 0, 0};
 float mx = 0, my = 0;
+static float4x4 g_rayMatrix;
 
 constexpr float scale = 1.0f;
 const float3 forward(0.0f, 0.0f, -scale);
@@ -47,10 +48,11 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     auto y1 = float(ypos);
 
     if (permitMouseMove) {
-        cam_rot[0] -= y1 - my;
-        cam_rot[1] -= x1 - mx;
-        constexpr float pi_2 = DEG_TO_RAD * 90;
-        cam_rot[0] = std::max(-pi_2, std::min(pi_2, cam_rot[0]));
+        g_rayMatrix = mul(
+            g_rayMatrix,
+            mul(rotate_Y_4x4(mx - x1),
+                rotate_X_4x4(my - y1))
+            );
     }
 
     mx = x1;
@@ -62,7 +64,7 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
 static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             permitMouseMove = true;
 
         } else if (action == GLFW_RELEASE) {
@@ -160,6 +162,9 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
             break;
         case GLFW_KEY_0:
             if (action == GLFW_PRESS) {
+                g_rayMatrix.identity();
+                g_camPos = g_camPos_default;
+
                 g_softShadows = false;
                 g_reflect = false;
                 g_refract = false;
@@ -355,15 +360,11 @@ int main(int argc, char **argv) {
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
-        cam_rot[2] += rot_step;
-        float4x4 g_rayMatrix = mul(rotate_Z_4x4(cam_rot[2]), mul(rotate_Y_4x4(-cam_rot[1]), rotate_X_4x4(+cam_rot[0])));
-
+//        cam_rot[2] += rot_step;
+        g_rayMatrix = mul(g_rayMatrix, rotate_Z_4x4(rot_step));
         g_camPos += mul(g_rayMatrix, multiplier * step);
-        g_rayMatrix.M(3, 0) = g_camPos.x;
-        g_rayMatrix.M(3, 1) = g_camPos.y;
-        g_rayMatrix.M(3, 2) = g_camPos.z;
 
-        program.SetUniform("g_rayMatrix", g_rayMatrix);
+        program.SetUniform("g_rayMatrix", mul(translate4x4(g_camPos), g_rayMatrix));
 
         program.SetUniform("g_screenWidth", WIDTH);
         program.SetUniform("g_screenHeight", HEIGHT);

@@ -88,7 +88,6 @@ float rot_step = 0.0f;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
     switch (key) {
         case GLFW_KEY_W:
-        case GLFW_KEY_UP:
             if (action == GLFW_PRESS) {
                 step += forward;
             } else if (action == GLFW_RELEASE) {
@@ -96,7 +95,6 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
             }
             break;
         case GLFW_KEY_A:
-        case GLFW_KEY_LEFT:
             if (action == GLFW_PRESS) {
                 step += left;
             } else if (action == GLFW_RELEASE) {
@@ -104,7 +102,6 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
             }
             break;
         case GLFW_KEY_S:
-        case GLFW_KEY_DOWN:
             if (action == GLFW_PRESS) {
                 step -= forward;
             } else if (action == GLFW_RELEASE) {
@@ -112,7 +109,6 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
             }
             break;
         case GLFW_KEY_D:
-        case GLFW_KEY_RIGHT:
             if (action == GLFW_PRESS) {
                 step -= left;
             } else if (action == GLFW_RELEASE) {

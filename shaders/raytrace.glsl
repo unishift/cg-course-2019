@@ -440,7 +440,7 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
         }
 
         float4 albedo = material.albedo;
-        float intensity = AmbientOcclusion(point, norm);
+        float intensity = AmbientOcclusion(point, dot(ray_dir, norm) < 0 ? norm : -norm);
         float specularity = 0.0;
         for (int i = 0; i < lights.length(); i++) {
             float light_distance = length(lights[i].pos - point);

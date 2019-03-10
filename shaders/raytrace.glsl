@@ -388,13 +388,13 @@ bool GetIntersectionParameters(float3 ray_pos, float3 ray_dir, out float3 point,
     return true;
 }
 
-float GetShadowCoefficient(float3 ray_pos, float3 ray_dir) {
+float GetShadowCoefficient(float3 ray_pos, float3 ray_dir, float dist) {
     int object_type;
     int object_index;
 
     float step = 0.0;
     float shadow_coef = 1.0;
-    while (step < MAX_DIST) {
+    while (step < dist) {
         float min_dist = GetMinimalDistance(ray_pos + step * ray_dir, object_type, object_index);
         if (min_dist < EPS) {
             return 0.0;
@@ -444,8 +444,9 @@ float4 CalculateColor(float3 ray_dir, float3 point) {
         float specularity = 0.0;
         for (int i = 0; i < lights.length(); i++) {
             float light_distance = length(lights[i].pos - point);
-            float3 light_direction = normalize(lights[i].pos - point);
-            float shadow_coef = GetShadowCoefficient(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm, light_direction);
+            float3 light_direction = (lights[i].pos - point) / light_distance;
+            float shadow_coef = GetShadowCoefficient(dot(light_direction, norm) < 0 ? point - 2 * EPS * norm : point + 2 * EPS * norm,
+                                                     light_direction, light_distance);
 
             intensity += shadow_coef * lights[i].intensity * max(0.0, dot(light_direction, norm));
             specularity += shadow_coef * lights[i].intensity * pow(max(0.0, -dot(reflect(-light_direction, norm), ray_dir)), material.exponent);

@@ -1,5 +1,6 @@
 # Clion project data
 .idea
+cmake-build-*
 
 # Prerequisites
 *.d

@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
         gl_error = glGetError();
 
     std::unordered_map<GLenum, std::string> shaders;
-    shaders[GL_VERTEX_SHADER] = "vertex.glsl";
-    shaders[GL_FRAGMENT_SHADER] = "fragment.glsl";
+    shaders[GL_VERTEX_SHADER] = "shaders/vertex.glsl";
+    shaders[GL_FRAGMENT_SHADER] = "shaders/fragment.glsl";
     ShaderProgram program(shaders);
     GL_CHECK_ERRORS;
 

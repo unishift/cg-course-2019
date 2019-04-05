@@ -98,24 +98,19 @@ int main(int argc, char **argv) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
+        glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         GL_CHECK_ERRORS;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         GL_CHECK_ERRORS;
 
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
-
-        glViewport(0, 0, WIDTH, HEIGHT);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
         glBindVertexArray(g_vertexArrayObject);
         GL_CHECK_ERRORS;
         glDrawArrays(GL_TRIANGLES, 0, 3);
         GL_CHECK_ERRORS;  // The last parameter of glDrawArrays is equal to VS invocations
-
 
         program.StopUseShader();
 

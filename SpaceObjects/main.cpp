@@ -82,9 +82,18 @@ int main(int argc, char **argv) {
 
     glfwSwapInterval(1); // force 60 frames per second
 
+    // Prepare transformations
+    const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 100.0f);
+    const auto view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+
     // Game loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        const auto time = glfwGetTime();
+        // Modify objects
+        objects[0].move(cosf(time) * glm::vec3(0.0f, 0.01f, 0.0f));
+        objects[0].rotate(0.1, glm::vec3(1.0f, 0.0f, 0.0f));
 
         glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -95,7 +104,10 @@ int main(int argc, char **argv) {
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
+        // Draw objects
         for (const auto& object : objects) {
+            const auto transform = perspective * view * object.getWorldTransform();
+            program.SetUniform("transform", transform);
             object.draw();
         }
 

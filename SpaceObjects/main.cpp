@@ -1,6 +1,7 @@
 // Internal includes
 #include "common.h"
 #include "ShaderProgram.h"
+#include "Object.h"
 
 // External dependencies
 #define GLFW_DLL
@@ -57,42 +58,29 @@ int main(int argc, char **argv) {
     ShaderProgram program(shaders);
     GL_CHECK_ERRORS;
 
+    // Create objects
+    std::vector<Object> objects = {
+        Object({
+            0.5f,  0.5f, 0.0f,  // Верхний правый угол
+            0.5f, -0.5f, 0.0f,  // Нижний правый угол
+            -0.5f, -0.5f, 0.0f,  // Нижний левый угол
+            -0.5f,  0.5f, 0.0f   // Верхний левый угол
+        }, {
+            0, 1, 3,
+            1, 2, 3,
+        }),
+        Object({
+            0.3f,  0.3f, 0.0f,  // Верхний правый угол
+            0.3f, -0.7f, 0.0f,  // Нижний правый угол
+            -0.7f, -0.7f, 0.0f,  // Нижний левый угол
+            -0.7f,  0.3f, 0.0f   // Верхний левый угол
+        }, {
+            0, 1, 3,
+            1, 2, 3,
+        })
+    };
+
     glfwSwapInterval(1); // force 60 frames per second
-
-    GLuint g_vertexBufferObject;
-    GLuint g_vertexArrayObject;
-    {
-        float trianglePos[] =
-            {
-                -0.5f, -0.5f,
-                0.5f, -0.5f,
-                0.0f, +0.5f,
-            };
-
-        g_vertexBufferObject = 0;
-        GLuint vertexLocation = 0; // simple layout, assume have only positions at location = 0
-
-        glGenBuffers(1, &g_vertexBufferObject);
-        GL_CHECK_ERRORS;
-        glBindBuffer(GL_ARRAY_BUFFER, g_vertexBufferObject);
-        GL_CHECK_ERRORS;
-        glBufferData(GL_ARRAY_BUFFER, 3 * 2 * sizeof(GLfloat), (GLfloat *) trianglePos, GL_STATIC_DRAW);
-        GL_CHECK_ERRORS;
-
-        glGenVertexArrays(1, &g_vertexArrayObject);
-        GL_CHECK_ERRORS;
-        glBindVertexArray(g_vertexArrayObject);
-        GL_CHECK_ERRORS;
-
-        glBindBuffer(GL_ARRAY_BUFFER, g_vertexBufferObject);
-        GL_CHECK_ERRORS;
-        glEnableVertexAttribArray(vertexLocation);
-        GL_CHECK_ERRORS;
-        glVertexAttribPointer(vertexLocation, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        GL_CHECK_ERRORS;
-
-        glBindVertexArray(0);
-    }
 
     // Game loop
     while (!glfwWindowShouldClose(window)) {
@@ -107,18 +95,14 @@ int main(int argc, char **argv) {
         program.StartUseShader();
         GL_CHECK_ERRORS;
 
-        glBindVertexArray(g_vertexArrayObject);
-        GL_CHECK_ERRORS;
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        GL_CHECK_ERRORS;  // The last parameter of glDrawArrays is equal to VS invocations
+        for (const auto& object : objects) {
+            object.draw();
+        }
 
         program.StopUseShader();
 
         glfwSwapBuffers(window);
     }
-
-    glDeleteVertexArrays(1, &g_vertexArrayObject);
-    glDeleteBuffers(1, &g_vertexBufferObject);
 
     glfwTerminate();
     return 0;

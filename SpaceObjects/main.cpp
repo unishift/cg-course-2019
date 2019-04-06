@@ -25,6 +25,135 @@ int initGL() {
     return 0;
 }
 
+static double mx = 0;
+static double my = 0;
+constexpr float scale = 1.0f;
+const glm::vec3 forward(0.0f, 0.0f, -scale);
+const glm::vec3 left(-scale, 0.0f, 0.0f);
+const glm::vec3 up(0.0f, scale, 0.0f);
+
+// Settings
+static bool permitMouseMove = false;
+
+// Prepare transformations
+const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 100.0f);
+static glm::vec3 camera_position(0.0f, 0.0f, -3.0f);
+static glm::mat4 camera_rot(1.0f);
+
+// Callback for mouse movement
+static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
+    auto x1 = float(0.01 * xpos);
+    auto y1 = float(0.01 * ypos);
+
+    if (permitMouseMove) {
+        camera_rot = glm::rotate(camera_rot, float(mx - x1), glm::vec3(0.0f, 1.0f, 0.0f));
+        camera_rot = glm::rotate(camera_rot, float(my - y1), glm::vec3(1.0f, 0.0f, 0.0f));
+    }
+
+    mx = x1;
+    my = y1;
+}
+
+// Callback for actions with mouse buttons
+// Permit camera movements with left button pressed only
+static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            permitMouseMove = true;
+
+        } else if (action == GLFW_RELEASE) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            permitMouseMove = false;
+        }
+    }
+}
+
+// Callback for movement controls
+// W - forward
+// A - left
+// S - backward
+// D - right
+// Q - up
+// E - down
+// SPACE - reset position
+float multiplier = 1.0f;
+glm::vec3 step = {0.0f, 0.0f, 0.0f};
+float rot_step = 0.0f;
+static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    switch (key) {
+        case GLFW_KEY_W:
+            if (action == GLFW_PRESS) {
+                step += forward;
+            } else if (action == GLFW_RELEASE) {
+                step -= forward;
+            }
+            break;
+        case GLFW_KEY_A:
+            if (action == GLFW_PRESS) {
+                step += left;
+            } else if (action == GLFW_RELEASE) {
+                step -= left;
+            }
+            break;
+        case GLFW_KEY_S:
+            if (action == GLFW_PRESS) {
+                step -= forward;
+            } else if (action == GLFW_RELEASE) {
+                step += forward;
+            }
+            break;
+        case GLFW_KEY_D:
+            if (action == GLFW_PRESS) {
+                step -= left;
+            } else if (action == GLFW_RELEASE) {
+                step += left;
+            }
+            break;
+        case GLFW_KEY_R:
+            if (action == GLFW_PRESS) {
+                step += up;
+            } else if (action == GLFW_RELEASE) {
+                step -= up;
+            }
+            break;
+        case GLFW_KEY_F:
+            if (action == GLFW_PRESS) {
+                step -= up;
+            } else if (action == GLFW_RELEASE) {
+                step += up;
+            }
+            break;
+        case GLFW_KEY_Q:
+            if (action == GLFW_PRESS) {
+                rot_step += 0.1f;
+            } else if (action == GLFW_RELEASE) {
+                rot_step -= 0.1f;
+            }
+            break;
+        case GLFW_KEY_E:
+            if (action == GLFW_PRESS) {
+                rot_step -= 0.1f;
+            } else if (action == GLFW_RELEASE) {
+                rot_step += 0.1f;
+            }
+            break;
+        case GLFW_KEY_LEFT_SHIFT:
+        case GLFW_KEY_RIGHT_SHIFT:
+            if (action == GLFW_PRESS) {
+                multiplier *= 2;
+            } else if (action == GLFW_RELEASE) {
+                multiplier /= 2;
+            }
+            break;
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
+        default:
+            break;
+    }
+}
+
 int main(int argc, char **argv) {
     if (!glfwInit())
         return -1;
@@ -43,6 +172,9 @@ int main(int argc, char **argv) {
 
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetCursorPosCallback(window, mouseMove);
+    glfwSetMouseButtonCallback(window, mouseButton);
+    glfwSetKeyCallback(window, keyboardControls);
 
     if (initGL() != 0)
         return -1;
@@ -82,16 +214,13 @@ int main(int argc, char **argv) {
 
     glfwSwapInterval(1); // force 60 frames per second
 
-    // Prepare transformations
-    const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 100.0f);
-    const auto view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
-
     // Game loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         const auto time = glfwGetTime();
         // Modify objects
+        camera_position -= multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
         objects[0].move(cosf(time) * glm::vec3(0.0f, 0.01f, 0.0f));
         objects[0].rotate(0.1, glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -105,6 +234,7 @@ int main(int argc, char **argv) {
         GL_CHECK_ERRORS;
 
         // Draw objects
+        const auto view = camera_rot * glm::translate(glm::mat4(1.0f), camera_position);
         for (const auto& object : objects) {
             const auto transform = perspective * view * object.getWorldTransform();
             program.SetUniform("transform", transform);

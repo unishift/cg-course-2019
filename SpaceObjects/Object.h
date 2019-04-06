@@ -1,0 +1,8 @@
+#ifndef SPACEOBJECTS_OBJECT_H
+#define SPACEOBJECTS_OBJECT_H
+
+class Object {
+
+};
+
+#endif //SPACEOBJECTS_OBJECT_H

@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
     GL_CHECK_ERRORS;
 
     std::vector<Model> models = {
-        Model("../luke/Luke Skywalkers landspeeder.obj"),
+        Model("../models/Luke_Skywalkers_landspeeder/Luke Skywalkers landspeeder.obj"),
     };
 
     glfwSwapInterval(1); // force 60 frames per second

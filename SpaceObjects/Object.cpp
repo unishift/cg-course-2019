@@ -1,11 +1,6 @@
 #include "Object.h"
 
-Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &elements) :
-    vertices(vertices),
-    elements(elements),
-    world_pos(0.0f, 0.0f, 0.0f),
-    rot(1.0f) {
-
+void Object::init() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -22,4 +17,37 @@ Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &el
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLuint), nullptr);
 
     glBindVertexArray(0);
+}
+
+Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &elements) :
+    vertices(vertices),
+    elements(elements),
+    world_pos(0.0f, 0.0f, 0.0f),
+    rot(1.0f) {
+
+    init();
+}
+
+Object::Object(const aiMesh* mesh) :
+    world_pos(0.0f, 0.0f, 0.0f),
+    rot(1.0f) {
+    // Vertices
+    for (int i = 0; i < mesh->mNumVertices; i++) {
+        const auto& vertex = mesh->mVertices[i];
+
+        vertices.push_back(vertex.x);
+        vertices.push_back(vertex.y);
+        vertices.push_back(vertex.z);
+    }
+
+    // Indices
+    for (int i = 0; i < mesh->mNumFaces; i++) {
+        const auto& face = mesh->mFaces[i];
+
+        for (int j = 0; j < face.mNumIndices; j++) {
+            elements.push_back(face.mIndices[j]);
+        }
+    }
+
+    init();
 }

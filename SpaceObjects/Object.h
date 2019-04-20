@@ -5,9 +5,12 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <assimp/mesh.h>
 
 class Object {
     GLuint VAO, VBO, EBO;
+
+    void init();
 public:
     std::vector<GLfloat> vertices;
     std::vector<GLuint> elements;
@@ -16,6 +19,8 @@ public:
     glm::mat4 rot;
 
     Object(const std::vector<float>& vertices, const std::vector<GLuint>& elements);
+
+    explicit Object(const aiMesh* mesh);
 
     void move(const glm::vec3& translation) {
         world_pos += translation;

@@ -1,7 +1,7 @@
 // Internal includes
 #include "common.h"
 #include "ShaderProgram.h"
-#include "Object.h"
+#include "Model.h"
 
 // External dependencies
 #define GLFW_DLL
@@ -36,7 +36,7 @@ const glm::vec3 up(0.0f, scale, 0.0f);
 static bool permitMouseMove = false;
 
 // Prepare transformations
-const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 100.0f);
+const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 1000.0f);
 static glm::vec3 camera_position(0.0f, 0.0f, -3.0f);
 static glm::mat4 camera_rot(1.0f);
 
@@ -190,26 +190,8 @@ int main(int argc, char **argv) {
     ShaderProgram program(shaders);
     GL_CHECK_ERRORS;
 
-    // Create objects
-    std::vector<Object> objects = {
-        Object({
-            0.5f,  0.5f, 0.0f,  // Верхний правый угол
-            0.5f, -0.5f, 0.0f,  // Нижний правый угол
-            -0.5f, -0.5f, 0.0f,  // Нижний левый угол
-            -0.5f,  0.5f, 0.0f   // Верхний левый угол
-        }, {
-            0, 1, 3,
-            1, 2, 3,
-        }),
-        Object({
-            0.3f,  0.3f, 0.0f,  // Верхний правый угол
-            0.3f, -0.7f, 0.0f,  // Нижний правый угол
-            -0.7f, -0.7f, 0.0f,  // Нижний левый угол
-            -0.7f,  0.3f, 0.0f   // Верхний левый угол
-        }, {
-            0, 1, 3,
-            1, 2, 3,
-        })
+    std::vector<Model> models = {
+        Model("../luke/Luke Skywalkers landspeeder.obj"),
     };
 
     glfwSwapInterval(1); // force 60 frames per second
@@ -221,8 +203,6 @@ int main(int argc, char **argv) {
         const auto time = glfwGetTime();
         // Modify objects
         camera_position -= multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
-        objects[0].move(cosf(time) * glm::vec3(0.0f, 0.01f, 0.0f));
-        objects[0].rotate(0.1, glm::vec3(1.0f, 0.0f, 0.0f));
 
         glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -234,11 +214,15 @@ int main(int argc, char **argv) {
         GL_CHECK_ERRORS;
 
         // Draw objects
-        const auto view = camera_rot * glm::translate(glm::mat4(1.0f), camera_position);
-        for (const auto& object : objects) {
-            const auto transform = perspective * view * object.getWorldTransform();
-            program.SetUniform("transform", transform);
-            object.draw();
+        const auto view = perspective * camera_rot * glm::translate(glm::mat4(1.0f), camera_position);
+        for (const auto& model : models) {
+            const auto local = view * model.getWorldTransform();
+            for (const auto& object : model.objects) {
+                const auto transform = local * object.getWorldTransform();
+                program.SetUniform("transform", transform);
+                object.draw();
+                GL_CHECK_ERRORS;
+            }
         }
 
         program.StopUseShader();

@@ -8,15 +8,20 @@
 #include "Object.h"
 
 class Model {
+    std::string model_location;
+
+    void process_object(const aiNode* node, const aiScene* scene);
+
+    void process_textures(const aiScene* scene);
+
  public:
     std::vector<Object> objects;
+    std::vector<GLuint> textures;
 
     glm::vec3 world_pos;
     glm::mat4 rot;
 
     explicit Model(const std::string& path);
-
-    void process_object(const aiNode* node, const aiScene* scene);
 
     void move(const glm::vec3& translation) {
         world_pos += translation;

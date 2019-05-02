@@ -7,9 +7,11 @@
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
 #include <random>
+#include <il.h>
+#include <ilu.h>
 
 // Window size
-static const GLsizei WIDTH = 640, HEIGHT = 480;
+static const GLsizei WIDTH = 1280, HEIGHT = 720;
 
 int initGL() {
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -77,7 +79,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 // Q - up
 // E - down
 // SPACE - reset position
-float multiplier = 1.0f;
+float multiplier = 0.1f;
 glm::vec3 step = {0.0f, 0.0f, 0.0f};
 float rot_step = 0.0f;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -179,6 +181,9 @@ int main(int argc, char **argv) {
     if (initGL() != 0)
         return -1;
 
+    ilInit();
+    iluInit();
+
     // Reset any OpenGL errors which could be present for some reason
     GLenum gl_error = glGetError();
     while (gl_error != GL_NO_ERROR)
@@ -191,7 +196,11 @@ int main(int argc, char **argv) {
     GL_CHECK_ERRORS;
 
     std::vector<Model> models = {
-        Model("../models/Luke_Skywalkers_landspeeder/Luke Skywalkers landspeeder.obj"),
+//        Model("../models/Luke_Skywalkers_landspeeder/Luke Skywalkers landspeeder.obj"),
+//        Model("../models/Borderlands 2 - Maya/maya.obj"),
+//        Model("../models/Enterprise NCC 1701 D/enterprise1701d.obj"),
+//        Model("../models/E-45-Aircraft/E 45 Aircraft_obj.obj"),
+        Model("../models/Federation Interceptor HN48/Federation Interceptor HN48 flying.obj"),
     };
 
     glfwSwapInterval(1); // force 60 frames per second

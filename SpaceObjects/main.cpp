@@ -8,7 +8,6 @@
 #include <GLFW/glfw3.h>
 #include <random>
 #include <il.h>
-#include <ilu.h>
 
 // Window size
 static const GLsizei WIDTH = 1280, HEIGHT = 720;
@@ -182,7 +181,6 @@ int main(int argc, char **argv) {
         return -1;
 
     ilInit();
-    iluInit();
 
     // Reset any OpenGL errors which could be present for some reason
     GLenum gl_error = glGetError();
@@ -230,6 +228,13 @@ int main(int argc, char **argv) {
             for (const auto& object : model.objects) {
                 const auto transform = local * object.getWorldTransform();
                 program.SetUniform("transform", transform);
+
+                const auto color = object.getDiffuseColor();
+                program.SetUniform("diffuse_color", color);
+
+                const bool use_texture = object.haveTexture();
+                program.SetUniform("use_texture", use_texture);
+
                 object.draw();
                 GL_CHECK_ERRORS;
             }

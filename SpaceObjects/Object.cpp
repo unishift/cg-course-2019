@@ -12,7 +12,7 @@ void Object::init() {
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLuint), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size() * sizeof(GLuint), elements.data(), GL_STATIC_DRAW);
@@ -21,12 +21,13 @@ void Object::init() {
     glBufferData(GL_ARRAY_BUFFER, texture_coords.size() * sizeof(GLfloat), texture_coords.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glBindVertexArray(0);
 }
 
-Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &elements) :
+Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &elements, const Material& material) :
+    material(material),
     vertices(vertices),
     elements(elements),
     world_pos(0.0f, 0.0f, 0.0f),
@@ -35,8 +36,8 @@ Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &el
     init();
 }
 
-Object::Object(const aiMesh* mesh, GLuint texture_index) :
-    material_index(texture_index),
+Object::Object(const aiMesh* mesh, const Material& material) :
+    material(material),
     world_pos(0.0f, 0.0f, 0.0f),
     rot(1.0f) {
     // Vertices

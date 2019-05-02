@@ -16,7 +16,7 @@ class Model {
 
  public:
     std::vector<Object> objects;
-    std::vector<GLuint> textures;
+    std::vector<Material> materials;
 
     glm::vec3 world_pos;
     glm::mat4 rot;

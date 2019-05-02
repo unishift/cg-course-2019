@@ -5,7 +5,6 @@
 #include <assimp/postprocess.h>
 #include <iostream>
 #include <il.h>
-#include <ilu.h>
 
 Model::Model(const std::string& path) :
     world_pos(0.0f, 0.0f, 0.0f),
@@ -29,7 +28,7 @@ void Model::process_object(const aiNode* node, const aiScene* scene) {
     for (int i = 0; i < node->mNumMeshes; i++) {
         const auto mesh = scene->mMeshes[node->mMeshes[i]];
 
-        objects.emplace_back(mesh, textures[mesh->mMaterialIndex]);
+        objects.emplace_back(mesh, materials[mesh->mMaterialIndex]);
     }
 
     for (int i = 0; i < node->mNumChildren; i++) {
@@ -45,12 +44,6 @@ GLuint read_texture(const std::string& path) {
     devil_status = ilLoadImage(path.c_str());
     if (!devil_status) {
         std::cerr << "Failed to load image: " << path << std::endl;
-    }
-
-    ILinfo image_info;
-    iluGetImageInfo(&image_info);
-    if (image_info.Origin != IL_ORIGIN_UPPER_LEFT) {
-        iluFlipImage();
     }
 
     devil_status = ilConvertImage(IL_RGB, IL_UNSIGNED_BYTE);
@@ -94,14 +87,17 @@ void Model::process_textures(const aiScene* scene) {
             const auto material = scene->mMaterials[material_index];
             const auto num_textures = material->GetTextureCount(texture_type);
 
+            aiColor3D diffuse_color;
+            material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse_color);
+            const auto glm_diffuse_color = glm::vec4(diffuse_color.r, diffuse_color.g, diffuse_color.b, 1.0f);
             if (num_textures == 0) {
-                textures.push_back(-1);
-            }
-            for (int texture_index = 0; texture_index < num_textures; texture_index++) {
+                materials.emplace_back(0, glm_diffuse_color);
+            } else {
                 aiString path;
-                material->GetTexture(texture_type, texture_index, &path);
+                material->GetTexture(texture_type, 0, &path);
+
                 const auto full_path = model_location + '/' + path.C_Str();
-                textures.push_back(read_texture(full_path));
+                materials.emplace_back(read_texture(full_path), glm_diffuse_color);
             }
         }
     }

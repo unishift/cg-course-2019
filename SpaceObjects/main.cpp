@@ -196,6 +196,7 @@ int main(int argc, char **argv) {
 
     glfwSwapInterval(1); // force 60 frames per second
 
+    glEnable(GL_DEPTH_TEST);
     // Game loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -207,7 +208,7 @@ int main(int argc, char **argv) {
         glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         GL_CHECK_ERRORS;
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK_ERRORS;
 
         program.StartUseShader();

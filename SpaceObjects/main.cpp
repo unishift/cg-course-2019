@@ -203,7 +203,21 @@ int main(int argc, char **argv) {
     });
     GL_CHECK_ERRORS;
 
-    const auto skybox = SkyBox::create("models/ame_nebula/purplenebula");
+    //  ...........................................
+    //  :   0   :  1   :  2   : 3  :   4   :  5   :
+    //  :.......:......:......:....:.......:......:
+    //  : front : back : down : up : right : left :
+    //  :.......:......:......:....:.......:......:
+
+    GLuint texture_id;
+    const auto skybox = SkyBox::create({
+        "models/ame_nebula/purplenebula_ft.tga",
+        "models/ame_nebula/purplenebula_bk.tga",
+        "models/ame_nebula/purplenebula_dn.tga",
+        "models/ame_nebula/purplenebula_up.tga",
+        "models/ame_nebula/purplenebula_rt.tga",
+        "models/ame_nebula/purplenebula_lf.tga",
+    });
 
     std::vector<Model> models = {
         create_model(ModelName::E45_AIRCRAFT),

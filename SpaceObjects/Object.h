@@ -112,7 +112,7 @@ public:
         glBindVertexArray(0);
     }
 
-    static SkyBox create(const std::string& path);
+    static SkyBox create(const std::array<std::string, 6>& file_names);
 };
 
 #endif //SPACEOBJECTS_OBJECT_H

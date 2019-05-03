@@ -65,17 +65,7 @@ Object::Object(const aiMesh* mesh, const Material& material) :
     init();
 }
 
-SkyBox SkyBox::create(const std::string &path) {
-
-    const std::array<std::string, 6> file_names {
-        path + "_ft.tga",
-        path + "_bk.tga",
-        path + "_dn.tga",
-        path + "_up.tga",
-        path + "_rt.tga",
-        path + "_lf.tga",
-    };
-
+SkyBox SkyBox::create(const std::array<std::string, 6>& file_names) {
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);

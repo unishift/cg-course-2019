@@ -193,8 +193,8 @@ int main(int argc, char **argv) {
 
     std::unordered_map<ShaderType, ShaderProgram> shader_programs;
     shader_programs[ShaderType::CLASSIC] = ShaderProgram({
-        {GL_VERTEX_SHADER,   "shaders/vertex.glsl"},
-        {GL_FRAGMENT_SHADER, "shaders/fragment.glsl"},
+        {GL_VERTEX_SHADER,   "shaders/classic_vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/classic_fragment.glsl"},
     });
     GL_CHECK_ERRORS;
 

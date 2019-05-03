@@ -203,20 +203,13 @@ int main(int argc, char **argv) {
     });
     GL_CHECK_ERRORS;
 
-    //  ...........................................
-    //  :   0   :  1   :  2   : 3  :   4   :  5   :
-    //  :.......:......:......:....:.......:......:
-    //  : front : back : down : up : right : left :
-    //  :.......:......:......:....:.......:......:
-
-    GLuint texture_id;
     const auto skybox = SkyBox::create({
-        "models/ame_nebula/purplenebula_ft.tga",
-        "models/ame_nebula/purplenebula_bk.tga",
-        "models/ame_nebula/purplenebula_dn.tga",
-        "models/ame_nebula/purplenebula_up.tga",
-        "models/ame_nebula/purplenebula_rt.tga",
-        "models/ame_nebula/purplenebula_lf.tga",
+        "models/necro_nebula/GalaxyTex_PositiveX.png",
+        "models/necro_nebula/GalaxyTex_NegativeX.png",
+        "models/necro_nebula/GalaxyTex_NegativeY.png",
+        "models/necro_nebula/GalaxyTex_PositiveY.png",
+        "models/necro_nebula/GalaxyTex_PositiveZ.png",
+        "models/necro_nebula/GalaxyTex_NegativeZ.png",
     });
 
     std::vector<Model> models = {

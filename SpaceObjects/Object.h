@@ -119,4 +119,21 @@ public:
     static SkyBox create(const std::array<std::string, 6>& file_names);
 };
 
+class Particles {
+    GLuint VAO, VBO;
+    std::vector<GLfloat> vertices;
+public:
+
+    explicit Particles(int nb_particles);
+
+    void draw() const {
+        glBindVertexArray(VAO);
+
+        glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
+        GL_CHECK_ERRORS;
+
+        glBindVertexArray(0);
+    }
+};
+
 #endif //SPACEOBJECTS_OBJECT_H

@@ -40,6 +40,8 @@ public:
 
   void SetUniform(const std::string &location, const glm::vec4& v4) const;
 
+  void SetUniform(const std::string &location, const glm::vec3& v3) const;
+
 private:
   static GLuint LoadShaderObject(GLenum type, const std::string &filename);
 

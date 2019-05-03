@@ -158,6 +158,8 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
 enum class ShaderType {
     CLASSIC,
     SKYBOX,
+    PARTICLES_PASSIVE,
+    PARTICLES_ACTIVE,
 };
 
 int main(int argc, char **argv) {
@@ -201,6 +203,15 @@ int main(int argc, char **argv) {
         {GL_VERTEX_SHADER,   "shaders/skybox_vertex.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/skybox_fragment.glsl"},
     });
+    shader_programs[ShaderType::PARTICLES_PASSIVE] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/particles_passive_vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/particles_passive_fragment.glsl"},
+    });
+    shader_programs[ShaderType::PARTICLES_ACTIVE] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/particles_active_vertex.glsl"},
+        {GL_GEOMETRY_SHADER, "shaders/particles_active_geometry.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/particles_active_fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
 
     const auto skybox = SkyBox::create({
@@ -211,6 +222,8 @@ int main(int argc, char **argv) {
         "models/necro_nebula/GalaxyTex_PositiveZ.png",
         "models/necro_nebula/GalaxyTex_NegativeZ.png",
     });
+
+    Particles particles(1000);
 
     std::vector<Model> models = {
         create_model(ModelName::E45_AIRCRAFT),
@@ -226,17 +239,25 @@ int main(int argc, char **argv) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        const auto time = glfwGetTime();
-
         glViewport(0, 0, WIDTH, HEIGHT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         GL_CHECK_ERRORS;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK_ERRORS;
 
+        // Modify environment
+        const auto time = glfwGetTime();
+
+        camera_rot = glm::rotate(glm::mat4(1.0f), rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
+        const auto camera_position_diff = multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
+        camera_position -= camera_position_diff;
+
+        const auto world_transform = glm::translate(camera_rot, camera_position);
+        const auto view_transform = perspective * world_transform;
+
+
         // Draw skybox
         {
-            auto &program = shader_programs[ShaderType::SKYBOX];
+            auto& program = shader_programs[ShaderType::SKYBOX];
 
             glDepthMask(GL_FALSE);
             program.StartUseShader();
@@ -250,21 +271,38 @@ int main(int argc, char **argv) {
             glDepthMask(GL_TRUE);
         }
 
+        // Draw particles
+        {
+            const bool passive = step == glm::vec3(0, 0, 0);
+            auto& program = passive ? shader_programs[ShaderType::PARTICLES_PASSIVE] : shader_programs[ShaderType::PARTICLES_ACTIVE];
+
+            program.StartUseShader();
+
+            program.SetUniform("world_transform", glm::translate(glm::mat4(1.0f), camera_position));
+            program.SetUniform("perspective_transform", perspective * camera_rot);
+
+            if (!passive) {
+                program.SetUniform("velocity", camera_position_diff);
+            }
+
+            particles.draw();
+
+            program.StopUseShader();
+        }
+
         // Draw objects
         {
-            auto &program = shader_programs[ShaderType::CLASSIC];
+            auto& program = shader_programs[ShaderType::CLASSIC];
 
             // Modify objects
-            camera_rot = glm::rotate(glm::mat4(1.0f), rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
-            camera_position -= multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
+            //...
 
             program.StartUseShader();
             GL_CHECK_ERRORS;
 
             // Draw objects
-            const auto view = perspective * glm::translate(camera_rot, camera_position);
             for (const auto &model : models) {
-                const auto local = view * model.getWorldTransform();
+                const auto local = view_transform * model.getWorldTransform();
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);

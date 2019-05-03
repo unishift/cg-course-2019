@@ -1,5 +1,7 @@
 #include "Object.h"
 
+#include <random>
+
 void Object::init() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -96,4 +98,29 @@ SkyBox SkyBox::create(const std::array<std::string, 6>& file_names) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return SkyBox(texture_id);
+}
+
+Particles::Particles(int nb_particles) {
+    // Random stuff
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    auto randomizer = std::uniform_real_distribution<float>(-50.0f, 50.0f);
+
+    vertices.reserve(nb_particles * 3);
+    for (int i = 0; i < 3 * nb_particles; i++) {
+        vertices.push_back(randomizer(gen));
+    }
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, 3 * nb_particles, vertices.data(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glBindVertexArray(0);
 }

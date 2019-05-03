@@ -20,6 +20,7 @@ class Model {
 
     glm::vec3 world_pos;
     glm::mat4 rot;
+    float scale_coef = 1.0;
 
     Model() = default;
 
@@ -33,8 +34,12 @@ class Model {
         rot = glm::rotate(rot, angle, axis);
     }
 
+    void scale(float coef) {
+        scale_coef *= coef;
+    }
+
     glm::mat4 getWorldTransform() const {
-        return glm::translate(glm::mat4(1.0f), world_pos) * rot;
+        return glm::translate(glm::mat4(1.0f), world_pos) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(scale_coef));
     }
 };
 

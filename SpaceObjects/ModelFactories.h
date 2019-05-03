@@ -9,7 +9,7 @@ enum class ModelName {
 };
 
 static inline
-Model create_model(ModelName model_name, const glm::vec3 position = {0, 0, 0}) {
+Model create_model(ModelName model_name, const glm::vec3 position = {0, 0, 0}, float scale = 0) {
     Model model;
 
     switch (model_name) {

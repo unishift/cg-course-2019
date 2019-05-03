@@ -155,6 +155,10 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
     }
 }
 
+enum class ShaderType {
+    CLASSIC,
+};
+
 int main(int argc, char **argv) {
     if (!glfwInit())
         return -1;
@@ -187,10 +191,11 @@ int main(int argc, char **argv) {
     while (gl_error != GL_NO_ERROR)
         gl_error = glGetError();
 
-    std::unordered_map<GLenum, std::string> shaders;
-    shaders[GL_VERTEX_SHADER] = "shaders/vertex.glsl";
-    shaders[GL_FRAGMENT_SHADER] = "shaders/fragment.glsl";
-    ShaderProgram program(shaders);
+    std::unordered_map<ShaderType, ShaderProgram> shader_programs;
+    shader_programs[ShaderType::CLASSIC] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
 
     std::vector<Model> models = {
@@ -214,6 +219,8 @@ int main(int argc, char **argv) {
         GL_CHECK_ERRORS;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK_ERRORS;
+
+        auto& program = shader_programs[ShaderType::CLASSIC];
 
         program.StartUseShader();
         GL_CHECK_ERRORS;

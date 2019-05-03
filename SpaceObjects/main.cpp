@@ -47,8 +47,8 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     auto y1 = float(0.01 * ypos);
 
     if (permitMouseMove) {
-        camera_rot = glm::rotate(camera_rot, float(mx - x1), glm::vec3(0.0f, 1.0f, 0.0f));
-        camera_rot = glm::rotate(camera_rot, float(my - y1), glm::vec3(1.0f, 0.0f, 0.0f));
+        camera_rot = glm::rotate(glm::mat4(1.0f), float(my - y1), glm::vec3(1.0f, 0.0f, 0.0f)) *
+                     glm::rotate(glm::mat4(1.0f), float(mx - x1), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_rot;
     }
 
     mx = x1;
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
         GL_CHECK_ERRORS;
 
         // Draw objects
-        const auto view = perspective * camera_rot * glm::translate(glm::mat4(1.0f), camera_position);
+        const auto view = perspective * glm::translate(camera_rot, camera_position);
         for (const auto& model : models) {
             const auto local = view * model.getWorldTransform();
             for (const auto& object : model.objects) {

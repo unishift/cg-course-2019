@@ -9,7 +9,7 @@ public:
     GLuint diffuse_texture;
     glm::vec4 diffuse_color;
 
-    Material(GLuint diffuse_texture, const glm::vec4& diffuse_color) :
+    explicit Material(GLuint diffuse_texture, const glm::vec4& diffuse_color = glm::vec4(1.0f)) :
         diffuse_texture(diffuse_texture),
         diffuse_color(diffuse_color) {}
 };

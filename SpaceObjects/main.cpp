@@ -157,6 +157,7 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
 
 enum class ShaderType {
     CLASSIC,
+    SKYBOX,
 };
 
 int main(int argc, char **argv) {
@@ -196,7 +197,13 @@ int main(int argc, char **argv) {
         {GL_VERTEX_SHADER,   "shaders/classic_vertex.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/classic_fragment.glsl"},
     });
+    shader_programs[ShaderType::SKYBOX] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/skybox_vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/skybox_fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
+
+    const auto skybox = SkyBox::create("models/ame_nebula/purplenebula");
 
     std::vector<Model> models = {
         create_model(ModelName::E45_AIRCRAFT),
@@ -211,8 +218,6 @@ int main(int argc, char **argv) {
         glfwPollEvents();
 
         const auto time = glfwGetTime();
-        // Modify objects
-        camera_position -= multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
 
         glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -220,31 +225,53 @@ int main(int argc, char **argv) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK_ERRORS;
 
-        auto& program = shader_programs[ShaderType::CLASSIC];
+        // Draw skybox
+        {
+            auto &program = shader_programs[ShaderType::SKYBOX];
 
-        program.StartUseShader();
-        GL_CHECK_ERRORS;
+            glDepthMask(GL_FALSE);
+            program.StartUseShader();
 
-        // Draw objects
-        const auto view = perspective * glm::translate(camera_rot, camera_position);
-        for (const auto& model : models) {
-            const auto local = view * model.getWorldTransform();
-            for (const auto& object : model.objects) {
-                const auto transform = local * object.getWorldTransform();
-                program.SetUniform("transform", transform);
+            const auto transform = perspective * camera_rot;
+            program.SetUniform("transform", transform);
 
-                const auto color = object.getDiffuseColor();
-                program.SetUniform("diffuse_color", color);
+            skybox.draw();
 
-                const bool use_texture = object.haveTexture();
-                program.SetUniform("use_texture", use_texture);
-
-                object.draw();
-                GL_CHECK_ERRORS;
-            }
+            program.StopUseShader();
+            glDepthMask(GL_TRUE);
         }
 
-        program.StopUseShader();
+        // Draw objects
+        {
+            auto &program = shader_programs[ShaderType::CLASSIC];
+
+            // Modify objects
+            camera_position -= multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
+
+            program.StartUseShader();
+            GL_CHECK_ERRORS;
+
+            // Draw objects
+            const auto view = perspective * glm::translate(camera_rot, camera_position);
+            for (const auto &model : models) {
+                const auto local = view * model.getWorldTransform();
+                for (const auto &object : model.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
+
+            program.StopUseShader();
+        }
 
         glfwSwapBuffers(window);
     }

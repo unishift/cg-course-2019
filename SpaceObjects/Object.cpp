@@ -64,3 +64,46 @@ Object::Object(const aiMesh* mesh, const Material& material) :
 
     init();
 }
+
+SkyBox SkyBox::create(const std::string &path) {
+
+    const std::array<std::string, 6> file_names {
+        path + "_ft.tga",
+        path + "_bk.tga",
+        path + "_dn.tga",
+        path + "_up.tga",
+        path + "_rt.tga",
+        path + "_lf.tga",
+    };
+
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
+
+    for (int i = 0; i < file_names.size(); i++) {
+        uint image = ilGenImage();
+        ilBindImage(image);
+        const auto status = ilLoadImage(file_names[i].c_str());
+        if (!status) {
+            std::cerr << "Error loading skybox: " << ilGetError() << std::endl;
+        }
+
+        const int w = ilGetInteger(IL_IMAGE_WIDTH);
+        const int h = ilGetInteger(IL_IMAGE_HEIGHT);
+        const int format = ilGetInteger(IL_IMAGE_FORMAT);
+        const int type = ilGetInteger(IL_IMAGE_TYPE);
+
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                     0, GL_RGB, w, h, 0, format, type, ilGetData());
+
+        ilDeleteImage(image);
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return SkyBox(texture_id);
+}

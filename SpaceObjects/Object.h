@@ -46,6 +46,10 @@ public:
         return material.diffuse_color;
     }
 
+    float getOpacity() const {
+        return material.opacity;
+    }
+
     bool haveTexture() const {
         return material.diffuse_texture != 0;
     }

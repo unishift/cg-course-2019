@@ -88,16 +88,18 @@ void Model::process_textures(const aiScene* scene) {
             const auto num_textures = material->GetTextureCount(texture_type);
 
             aiColor3D diffuse_color;
+            float opacity;
             material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse_color);
+            material->Get(AI_MATKEY_OPACITY, opacity);
             const auto glm_diffuse_color = glm::vec4(diffuse_color.r, diffuse_color.g, diffuse_color.b, 1.0f);
             if (num_textures == 0) {
-                materials.emplace_back(0, glm_diffuse_color);
+                materials.emplace_back(0, glm_diffuse_color, opacity);
             } else {
                 aiString path;
                 material->GetTexture(texture_type, 0, &path);
 
                 const auto full_path = model_location + '/' + path.C_Str();
-                materials.emplace_back(read_texture(full_path), glm_diffuse_color);
+                materials.emplace_back(read_texture(full_path), glm_diffuse_color, opacity);
             }
         }
     }

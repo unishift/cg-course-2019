@@ -220,6 +220,8 @@ int main(int argc, char **argv) {
     glfwSwapInterval(1); // force 60 frames per second
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Game loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -271,6 +273,9 @@ int main(int argc, char **argv) {
 
                     const bool use_texture = object.haveTexture();
                     program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = object.getOpacity();
+                    program.SetUniform("opacity", opacity);
 
                     object.draw();
                     GL_CHECK_ERRORS;

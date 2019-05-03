@@ -21,6 +21,8 @@ class Model {
     glm::vec3 world_pos;
     glm::mat4 rot;
 
+    Model() = default;
+
     explicit Model(const std::string& path);
 
     void move(const glm::vec3& translation) {

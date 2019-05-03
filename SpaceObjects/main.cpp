@@ -1,7 +1,7 @@
 // Internal includes
 #include "common.h"
 #include "ShaderProgram.h"
-#include "Model.h"
+#include "ModelFactories.h"
 
 // External dependencies
 #define GLFW_DLL
@@ -194,13 +194,9 @@ int main(int argc, char **argv) {
     GL_CHECK_ERRORS;
 
     std::vector<Model> models = {
-//        Model("../models/Luke_Skywalkers_landspeeder/Luke Skywalkers landspeeder.obj"),
-//        Model("../models/Borderlands 2 - Maya/maya.obj"),
-//        Model("../models/Enterprise NCC 1701 D/enterprise1701d.obj"),
-        Model("../models/E-45-Aircraft/E 45 Aircraft_obj.obj"),
-//        Model("../models/Federation Interceptor HN48/Federation Interceptor HN48 landed.obj"),
+        create_model(ModelName::E45_AIRCRAFT),
+//        create_model(ModelName::ENTERPRISE_NCC1701D),
     };
-    models[0].rotate(M_PI, {0, 1, 0});
 
     glfwSwapInterval(1); // force 60 frames per second
 

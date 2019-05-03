@@ -232,6 +232,9 @@ int main(int argc, char **argv) {
 
     glfwSwapInterval(1); // force 60 frames per second
 
+    glm::vec3 smooth_step(0.0f);
+    float smooth_rot_step = 0.0f;
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -247,8 +250,11 @@ int main(int argc, char **argv) {
         // Modify environment
         const auto time = glfwGetTime();
 
-        camera_rot = glm::rotate(glm::mat4(1.0f), rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
-        const auto camera_position_diff = multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
+        smooth_step += 0.05f * (step - smooth_step);
+        smooth_rot_step += 0.05f * (rot_step - smooth_rot_step);
+
+        camera_rot = glm::rotate(glm::mat4(1.0f), smooth_rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
+        const auto camera_position_diff = multiplier * glm::transpose(glm::mat3(camera_rot)) * smooth_step;
         camera_position -= camera_position_diff;
 
         const auto world_transform = glm::translate(camera_rot, camera_position);

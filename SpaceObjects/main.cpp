@@ -255,6 +255,7 @@ int main(int argc, char **argv) {
             auto &program = shader_programs[ShaderType::CLASSIC];
 
             // Modify objects
+            camera_rot = glm::rotate(glm::mat4(1.0f), rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
             camera_position -= multiplier * glm::transpose(glm::mat3(camera_rot)) * step;
 
             program.StartUseShader();

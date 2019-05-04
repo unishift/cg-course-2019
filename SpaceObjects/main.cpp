@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <random>
 #include <il.h>
+#include <glm/gtx/vector_angle.hpp>
 
 // Window size
 static const GLsizei WIDTH = 1280, HEIGHT = 720;
@@ -37,7 +38,8 @@ const glm::vec3 up(0.0f, scale, 0.0f);
 static bool permitMouseMove = false;
 
 // Prepare transformations
-const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 1000.0f);
+//const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 1000.0f);
+const auto perspective = glm::infinitePerspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f);
 static glm::vec3 camera_position(0.0f, 0.0f, -3.0f);
 static glm::mat4 camera_rot(1.0f);
 
@@ -70,6 +72,11 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
     }
 }
 
+enum class CameraMode {
+    FIRST_PERSON,
+    THIRD_PERSON,
+};
+
 // Callback for movement controls
 // W - forward
 // A - left
@@ -81,6 +88,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
 float multiplier = 0.1f;
 glm::vec3 step = {0.0f, 0.0f, 0.0f};
 float rot_step = 0.0f;
+CameraMode camera_mode = CameraMode::THIRD_PERSON;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
     switch (key) {
         case GLFW_KEY_W:
@@ -145,6 +153,16 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
                 multiplier *= 2;
             } else if (action == GLFW_RELEASE) {
                 multiplier /= 2;
+            }
+            break;
+        case GLFW_KEY_F2:
+            if (action == GLFW_PRESS) {
+                camera_mode = CameraMode::FIRST_PERSON;
+            }
+            break;
+        case GLFW_KEY_F3:
+            if (action == GLFW_PRESS) {
+                camera_mode = CameraMode::THIRD_PERSON;
             }
             break;
         case GLFW_KEY_ESCAPE:
@@ -226,9 +244,10 @@ int main(int argc, char **argv) {
 
     Particles particles(1000);
 
-    std::vector<Model> models = {
-        create_model(ModelName::E45_AIRCRAFT),
-//        create_model(ModelName::ENTERPRISE_NCC1701D),
+    auto main_ship = create_model(ModelName::E45_AIRCRAFT, {0.0f, 0.0f, 0.0f}, {0.0f, M_PI, 0.0f});
+
+    std::vector<Model> enemies {
+        create_model(ModelName::REPVENATOR, {5.0f, 5.0f, -200.0f}, glm::vec3(0.0f), 1.0f),
     };
 
     glfwSwapInterval(1); // force 60 frames per second
@@ -258,10 +277,9 @@ int main(int argc, char **argv) {
         camera_rot = glm::rotate(glm::mat4(1.0f), smooth_rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
         const auto camera_position_diff = multiplier * glm::transpose(glm::mat3(camera_rot)) * smooth_step;
         camera_position -= camera_position_diff;
-
-        const auto world_transform = glm::translate(camera_rot, camera_position);
+        const auto camera_shift = camera_mode == CameraMode::FIRST_PERSON ? glm::vec3(0.0f, -0.5f, 1.0f) : glm::vec3(0.0, -3.0f, -10.0f);
+        const auto world_transform = glm::translate(glm::translate(glm::mat4(1.0f), camera_shift) * camera_rot, camera_position);
         const auto view_transform = perspective * world_transform;
-
 
         // Draw skybox
         {
@@ -303,13 +321,33 @@ int main(int argc, char **argv) {
             auto& program = shader_programs[ShaderType::CLASSIC];
 
             // Modify objects
-            //...
+            main_ship.move(camera_position_diff);
 
             program.StartUseShader();
             GL_CHECK_ERRORS;
 
+            {
+                const auto local = view_transform * main_ship.getWorldTransform();
+                for (const auto &object : main_ship.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = object.getOpacity();
+                    program.SetUniform("opacity", opacity);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
+
             // Draw objects
-            for (const auto &model : models) {
+            for (const auto &model : enemies) {
                 const auto local = view_transform * model.getWorldTransform();
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();

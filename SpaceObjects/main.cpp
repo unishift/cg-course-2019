@@ -253,6 +253,8 @@ int main(int argc, char **argv) {
 
     glm::vec3 smooth_step(0.0f);
     float smooth_rot_step = 0.0f;
+    const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
+    glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
 
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
@@ -298,17 +300,16 @@ int main(int argc, char **argv) {
 
         // Draw particles
         {
-            const bool passive = step == glm::vec3(0, 0, 0);
-            auto& program = passive ? shader_programs[ShaderType::PARTICLES_PASSIVE] : shader_programs[ShaderType::PARTICLES_ACTIVE];
+            auto& program = shader_programs[ShaderType::PARTICLES_ACTIVE];
+
+            particles_state += enemies_speed;
 
             program.StartUseShader();
 
-            program.SetUniform("world_transform", glm::translate(glm::mat4(1.0f), camera_position));
+            program.SetUniform("world_transform", glm::translate(glm::mat4(1.0f), camera_position + particles_state));
             program.SetUniform("perspective_transform", perspective * camera_rot);
 
-            if (!passive) {
-                program.SetUniform("velocity", camera_position_diff);
-            }
+            program.SetUniform("velocity", enemies_speed - camera_position_diff);
 
             particles.draw();
 
@@ -329,7 +330,7 @@ int main(int argc, char **argv) {
             }
 
             for (auto it = enemies.begin(); it != enemies.end(); it++) {
-                it->move({0.0f, 0.0f, 0.5f});
+                it->move(enemies_speed);
                 if (it->world_pos.z > 200.0f) {
                     enemies.erase(it--);
                 }

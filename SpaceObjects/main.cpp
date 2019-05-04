@@ -9,6 +9,7 @@
 #include <random>
 #include <il.h>
 #include <glm/gtx/vector_angle.hpp>
+#include <list>
 
 // Window size
 static const GLsizei WIDTH = 1280, HEIGHT = 720;
@@ -246,9 +247,7 @@ int main(int argc, char **argv) {
 
     auto main_ship = create_model(ModelName::E45_AIRCRAFT, {0.0f, 0.0f, 0.0f}, {0.0f, M_PI, 0.0f});
 
-    std::vector<Model> enemies {
-        create_model(ModelName::REPVENATOR, {5.0f, 5.0f, -200.0f}, glm::vec3(0.0f), 1.0f),
-    };
+    std::list<Model> enemies;
 
     glfwSwapInterval(1); // force 60 frames per second
 
@@ -322,6 +321,20 @@ int main(int argc, char **argv) {
 
             // Modify objects
             main_ship.move(camera_position_diff);
+
+            if (rand() % 300 == 0) {
+                const float x = rand() % 50 - 25;
+                const float y = rand() % 50 - 25;
+                enemies.push_back(create_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
+            }
+
+            for (auto it = enemies.begin(); it != enemies.end(); it++) {
+                it->move({0.0f, 0.0f, 0.5f});
+                if (it->world_pos.z > 200.0f) {
+                    enemies.erase(it--);
+                }
+            }
+
 
             program.StartUseShader();
             GL_CHECK_ERRORS;

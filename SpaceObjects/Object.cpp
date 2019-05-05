@@ -2,7 +2,14 @@
 
 #include <random>
 
-void Object::init() {
+Object::Object(const std::vector<float>& vertices, const std::vector<GLuint>& elements, const std::vector<GLfloat>& texture_coords, const Material& material) :
+    vertices(vertices),
+    elements(elements),
+    texture_coords(texture_coords),
+    material(material),
+    world_pos(0.0f, 0.0f, 0.0f),
+    rot(1.0f) {
+
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -28,20 +35,11 @@ void Object::init() {
     glBindVertexArray(0);
 }
 
-Object::Object(const std::vector<float> &vertices, const std::vector<GLuint> &elements, const Material& material) :
-    material(material),
-    vertices(vertices),
-    elements(elements),
-    world_pos(0.0f, 0.0f, 0.0f),
-    rot(1.0f) {
+Object Object::create(const aiMesh *mesh, const Material &material) {
+    std::vector<GLfloat> vertices;
+    std::vector<GLuint> elements;
+    std::vector<GLfloat> texture_coords;
 
-    init();
-}
-
-Object::Object(const aiMesh* mesh, const Material& material) :
-    material(material),
-    world_pos(0.0f, 0.0f, 0.0f),
-    rot(1.0f) {
     // Vertices
     for (int i = 0; i < mesh->mNumVertices; i++) {
         const auto& vertex = mesh->mVertices[i];
@@ -64,7 +62,7 @@ Object::Object(const aiMesh* mesh, const Material& material) :
         }
     }
 
-    init();
+    return Object(vertices, elements, texture_coords, material);
 }
 
 SkyBox SkyBox::create(const std::array<std::string, 6>& file_names) {
@@ -98,6 +96,62 @@ SkyBox SkyBox::create(const std::array<std::string, 6>& file_names) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return SkyBox(texture_id);
+}
+
+SkyBox::SkyBox(GLuint texture_index) : texture_index(texture_index) {
+    // Create cube object
+    vertices = {
+        // front
+        -1.0, -1.0,  1.0,
+        1.0, -1.0,  1.0,
+        1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0,
+        // back
+        -1.0, -1.0, -1.0,
+        1.0, -1.0, -1.0,
+        1.0,  1.0, -1.0,
+        -1.0,  1.0, -1.0,
+    };
+    elements = {
+        // front
+        0, 1, 2,
+        2, 3, 0,
+        // right
+        1, 5, 6,
+        6, 2, 1,
+        // back
+        7, 6, 5,
+        5, 4, 7,
+        // left
+        4, 0, 3,
+        3, 7, 4,
+        // bottom
+        4, 5, 1,
+        1, 0, 4,
+        // top
+        3, 2, 6,
+        6, 7, 3,
+    };
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size() * sizeof(GLuint), elements.data(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glBindVertexArray(0);
 }
 
 Particles::Particles(int nb_particles) {

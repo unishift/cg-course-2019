@@ -17,7 +17,6 @@ protected:
     GLuint VAO, VBO, EBO, TBO;
     Material material;
 
-    void init();
 public:
     std::vector<GLfloat> vertices;
     std::vector<GLuint> elements;
@@ -26,9 +25,7 @@ public:
     glm::vec3 world_pos;
     glm::mat4 rot;
 
-    Object(const std::vector<float>& vertices, const std::vector<GLuint>& elements, const Material& material);
-
-    explicit Object(const aiMesh* mesh, const Material& material);
+    Object(const std::vector<float>& vertices, const std::vector<GLuint>& elements, const std::vector<GLfloat>& texture_coords, const Material& material);
 
     void move(const glm::vec3& translation) {
         world_pos += translation;
@@ -54,8 +51,7 @@ public:
         return material.diffuse_texture != 0;
     }
 
-    virtual void draw() const {
-        glActiveTexture(GL_TEXTURE0);
+    void draw() const {
         glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
         glBindVertexArray(VAO);
 
@@ -64,49 +60,22 @@ public:
         GL_CHECK_ERRORS;
         glBindVertexArray(0);
     }
+
+    static Object create(const aiMesh* mesh, const Material& material);
 };
 
-class SkyBox : private Object {
+class SkyBox {
+    GLuint VAO, VBO, EBO;
+    GLuint texture_index;
+
 public:
+    std::vector<GLfloat> vertices;
+    std::vector<GLuint> elements;
 
-    explicit SkyBox(GLuint texture_index) :
-        // Create cube object
-        Object({
-                // front
-                -1.0, -1.0,  1.0,
-                1.0, -1.0,  1.0,
-                1.0,  1.0,  1.0,
-                -1.0,  1.0,  1.0,
-                // back
-                -1.0, -1.0, -1.0,
-                1.0, -1.0, -1.0,
-                1.0,  1.0, -1.0,
-                -1.0,  1.0, -1.0,
-            }, {
-                // front
-                0, 1, 2,
-                2, 3, 0,
-                // right
-                1, 5, 6,
-                6, 2, 1,
-                // back
-                7, 6, 5,
-                5, 4, 7,
-                // left
-                4, 0, 3,
-                3, 7, 4,
-                // bottom
-                4, 5, 1,
-                1, 0, 4,
-                // top
-                3, 2, 6,
-                6, 7, 3,
-            }, Material(texture_index)
-        ) { }
+    explicit SkyBox(GLuint texture_index);
 
-    void draw() const override {
-//        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, material.diffuse_texture);
+    void draw() const {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, texture_index);
         GL_CHECK_ERRORS;
         glBindVertexArray(VAO);
         GL_CHECK_ERRORS;

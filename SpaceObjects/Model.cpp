@@ -28,7 +28,7 @@ void Model::process_object(const aiNode* node, const aiScene* scene) {
     for (int i = 0; i < node->mNumMeshes; i++) {
         const auto mesh = scene->mMeshes[node->mMeshes[i]];
 
-        objects.emplace_back(mesh, materials[mesh->mMaterialIndex]);
+        objects.push_back(Object::create(mesh, materials[mesh->mMaterialIndex]));
     }
 
     for (int i = 0; i < node->mNumChildren; i++) {

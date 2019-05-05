@@ -252,7 +252,9 @@ int main(int argc, char **argv) {
 
     Crosshair crosshair;
 
-    auto main_ship = create_model(ModelName::E45_AIRCRAFT, {0.0f, 0.0f, 0.0f}, {0.0f, M_PI, 0.0f});
+    ModelFactory model_factory;
+
+    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, 0.0f, 0.0f}, {0.0f, M_PI, 0.0f});
 
     std::list<Model> enemies;
 
@@ -333,7 +335,7 @@ int main(int argc, char **argv) {
             if (rand() % 300 == 0) {
                 const float x = rand() % 50 - 25;
                 const float y = rand() % 50 - 25;
-                enemies.push_back(create_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
+                enemies.push_back(model_factory.get_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
             }
 
             for (auto it = enemies.begin(); it != enemies.end(); it++) {

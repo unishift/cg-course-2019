@@ -22,6 +22,17 @@ Model::Model(const std::string& path) :
 
         process_object(scene->mRootNode, scene);
     }
+
+    // Calculate bbox
+    for (const auto& object : objects) {
+        for (int i = 0; i < object.vertices.size(); i += 3) {
+            const auto v = object.vertices.data() + i;
+            const glm::vec3 vertex(v[0], v[1], v[2]);
+
+            bbox.min = glm::min(bbox.min, vertex);
+            bbox.max = glm::max(bbox.max, vertex);
+        }
+    }
 }
 
 void Model::process_object(const aiNode* node, const aiScene* scene) {

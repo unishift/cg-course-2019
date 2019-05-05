@@ -5,6 +5,7 @@
 #include <vector>
 #include <assimp/scene.h>
 
+#include "BBox.h"
 #include "Object.h"
 
 class Model {
@@ -17,6 +18,8 @@ class Model {
  public:
     std::vector<Object> objects;
     std::vector<Material> materials;
+
+    BBox bbox;
 
     glm::vec3 world_pos;
     glm::mat4 rot;

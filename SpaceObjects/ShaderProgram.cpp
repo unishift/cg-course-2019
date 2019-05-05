@@ -238,3 +238,13 @@ void ShaderProgram::SetUniform(const std::string &location, const glm::vec3 &v3)
     }
     glUniform3fv(uniformLocation, 1, glm::value_ptr(v3));
 }
+
+void ShaderProgram::SetUniform(const std::string &location, const glm::vec2 &v2) const {
+    GLint uniformLocation = glGetUniformLocation(shaderProgram, location.c_str());
+    if (uniformLocation == -1)
+    {
+        std::cerr << "Uniform  " << location << " not found" << std::endl;
+        return;
+    }
+    glUniform2fv(uniformLocation, 1, glm::value_ptr(v2));
+}

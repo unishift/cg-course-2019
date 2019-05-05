@@ -179,6 +179,7 @@ enum class ShaderType {
     SKYBOX,
     PARTICLES_PASSIVE,
     PARTICLES_ACTIVE,
+    CROSSHAIR,
 };
 
 int main(int argc, char **argv) {
@@ -232,6 +233,10 @@ int main(int argc, char **argv) {
         {GL_GEOMETRY_SHADER, "shaders/particles_active_geometry.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/particles_active_fragment.glsl"},
     });
+    shader_programs[ShaderType::CROSSHAIR] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/crosshair_vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/crosshair_fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
 
     const auto skybox = SkyBox::create({
@@ -244,6 +249,8 @@ int main(int argc, char **argv) {
     });
 
     Particles particles(1000);
+
+    Crosshair crosshair;
 
     auto main_ship = create_model(ModelName::E45_AIRCRAFT, {0.0f, 0.0f, 0.0f}, {0.0f, M_PI, 0.0f});
 
@@ -380,6 +387,21 @@ int main(int argc, char **argv) {
                     GL_CHECK_ERRORS;
                 }
             }
+
+            program.StopUseShader();
+        }
+
+        // Draw crosshair
+        {
+            auto& program = shader_programs[ShaderType::CROSSHAIR];
+
+            program.StartUseShader();
+
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            program.SetUniform("position", glm::vec2(2.0 * xpos / WIDTH - 1.0, -2.0 * ypos / HEIGHT + 1.0));
+
+            crosshair.draw();
 
             program.StopUseShader();
         }

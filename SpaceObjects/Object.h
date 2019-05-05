@@ -136,4 +136,21 @@ public:
     }
 };
 
+class Crosshair {
+    GLuint VAO, VBO;
+    std::vector<GLfloat> vertices;
+public:
+
+    Crosshair();
+
+    void draw() const {
+        glBindVertexArray(VAO);
+
+        glDrawArrays(GL_LINE_LOOP, 0, vertices.size() / 2);
+        GL_CHECK_ERRORS;
+
+        glBindVertexArray(0);
+    }
+};
+
 #endif //SPACEOBJECTS_OBJECT_H

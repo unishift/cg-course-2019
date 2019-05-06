@@ -52,4 +52,17 @@ class Model {
     }
 };
 
+class Asteroid : public Model {
+public:
+    glm::vec3 velocity;
+
+    Asteroid(const Model& model, const glm::vec3& velocity) :
+        Model(model),
+        velocity(velocity) {}
+
+    void moveAuto() {
+        world_pos += velocity;
+    }
+};
+
 #endif //SPACEOBJECTS_MODEL_H

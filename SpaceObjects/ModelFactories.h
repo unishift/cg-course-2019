@@ -9,6 +9,8 @@ enum class ModelName {
     E45_AIRCRAFT,
     ENTERPRISE_NCC1701D,
     REPVENATOR,
+    MYST_ASTEROID,
+    ASTEROID1,
 };
 
 class ModelFactory {

@@ -7,6 +7,8 @@ ModelFactory::ModelFactory() {
         {ModelName::E45_AIRCRAFT, "models/E-45-Aircraft/E 45 Aircraft_obj.obj"},
         {ModelName::ENTERPRISE_NCC1701D, "models/Enterprise NCC 1701 D/enterprise1701d.obj"},
         {ModelName::REPVENATOR, "models/Venator/export.obj"},
+        {ModelName::MYST_ASTEROID, "models/mysterious_asteroid/A2.obj"},
+        {ModelName::ASTEROID1, "models/asteroid1/planet3.obj"},
     };
 
     // Buffer all models
@@ -27,6 +29,8 @@ ModelFactory::ModelFactory() {
                 model.move({-44.15, -4, 8});
                 break;
             case ModelName::REPVENATOR:
+                break;
+            case ModelName::MYST_ASTEROID:
                 break;
         }
 

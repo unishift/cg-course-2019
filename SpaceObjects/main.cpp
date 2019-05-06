@@ -270,6 +270,8 @@ int main(int argc, char **argv) {
 
     std::list<Model> enemies;
 
+    std::list<Asteroid> asteroids;
+
     glfwSwapInterval(1); // force 60 frames per second
 
     glm::vec3 smooth_step(0.0f);
@@ -366,12 +368,15 @@ int main(int argc, char **argv) {
             // Modify objects
             main_ship.move(camera_shift);
 
+            // Enemies
+            // Spawn
             if (rand() % 300 == 0) {
                 const float x = rand() % 50 - 25;
                 const float y = rand() % 50 - 25;
                 enemies.push_back(model_factory.get_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
             }
 
+            // Move
             for (auto it = enemies.begin(); it != enemies.end(); it++) {
                 it->move(enemies_speed);
                 if (it->world_pos.z > 200.0f) {
@@ -386,6 +391,29 @@ int main(int argc, char **argv) {
                 }
             }
 
+            // Asteroids
+            if (rand() % 300 == 0) {
+                const float x = rand() % 50 - 25;
+                const float y = rand() % 50 - 25;
+                const glm::vec3 src(x, y, -200.0f);
+                const glm::vec3 velocity = glm::normalize(camera.position - src);
+                asteroids.emplace_back(model_factory.get_model(ModelName::ASTEROID1, src, glm::vec3(0.0f), 1.0f), velocity);
+            }
+
+            // Move
+            for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
+                it->moveAuto();
+                if (it->world_pos.z > 200.0f) {
+                    asteroids.erase(it--);
+                    continue;
+                }
+
+                if (intersect(main_ship.getBBox(), it->getBBox())) {
+                    main_ship_hp -= it->damage;
+                    asteroids.erase(it--);
+                    continue;
+                }
+            }
 
             program.StartUseShader();
             GL_CHECK_ERRORS;
@@ -410,8 +438,29 @@ int main(int argc, char **argv) {
                 }
             }
 
-            // Draw objects
+            // Draw enemies
             for (const auto &model : enemies) {
+                const auto local = perspective_transform * model.getWorldTransform();
+                for (const auto &object : model.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = object.getOpacity();
+                    program.SetUniform("opacity", opacity);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
+
+            // Draw asteroids
+            for (const auto &model : asteroids) {
                 const auto local = perspective_transform * model.getWorldTransform();
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();

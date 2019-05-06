@@ -8,7 +8,16 @@ set(SOURCE_FILES
         glad.c
         main.cpp
         ShaderProgram.h
-        ShaderProgram.cpp Object.cpp Object.h Model.cpp Model.h ModelFactories.h ModelFactories.cpp BBox.cpp BBox.h Camera.h)
+        ShaderProgram.cpp
+        Object.h
+        Object.cpp
+        Model.h
+        Model.cpp
+        ModelFactories.h
+        ModelFactories.cpp
+        BBox.h
+        BBox.cpp
+        Camera.h)
 
 set(ADDITIONAL_INCLUDE_DIRS
         dependencies/include/GLAD)

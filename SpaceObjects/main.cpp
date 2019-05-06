@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
-        // Kill enemies
+        // Kill targets
         if (shoot) {
 
             for (auto it = enemies.begin(); it != enemies.end(); it++) {
@@ -324,6 +324,25 @@ int main(int argc, char **argv) {
                     break;
                 }
             }
+
+            for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
+                const auto model = view_transform * it->getWorldTransform();
+                const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
+                const auto bbox_min = glm::project(it->bbox.min, model, perspective, view_port);
+                const auto bbox_max = glm::project(it->bbox.max, model, perspective, view_port);
+
+                const float min_x = glm::min(bbox_min.x, bbox_max.x);
+                const float min_y = glm::min(bbox_min.y, bbox_max.y);
+                const float max_x = glm::max(bbox_min.x, bbox_max.x);
+                const float max_y = glm::max(bbox_min.y, bbox_max.y);
+                if (xpos >= min_x && xpos <= max_x &&
+                    HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
+
+                    asteroids.erase(it);
+                    break;
+                }
+            }
+
             shoot = false;
         }
 

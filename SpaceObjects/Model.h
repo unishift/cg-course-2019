@@ -44,6 +44,10 @@ class Model {
     glm::mat4 getWorldTransform() const {
         return glm::translate(glm::mat4(1.0f), world_pos) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(scale_coef));
     }
+
+    BBox getBBox() const {
+        return BBox(bbox.min + world_pos, bbox.max + world_pos);
+    }
 };
 
 #endif //SPACEOBJECTS_MODEL_H

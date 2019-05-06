@@ -358,6 +358,12 @@ int main(int argc, char **argv) {
                 it->move(enemies_speed);
                 if (it->world_pos.z > 200.0f) {
                     enemies.erase(it--);
+                    continue;
+                }
+
+                if (intersect(main_ship.getBBox(), it->getBBox())) {
+                    enemies.erase(it--);
+                    continue;
                 }
             }
 

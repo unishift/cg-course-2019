@@ -50,6 +50,16 @@ class Model {
     BBox getBBox() const {
         return BBox(bbox.min + world_pos, bbox.max + world_pos);
     }
+
+    bool dead = false;
+    int death_countdown = 60;
+
+    bool die() {
+        // ...
+
+        death_countdown--;
+        return death_countdown == 0;
+    }
 };
 
 class Asteroid : public Model {

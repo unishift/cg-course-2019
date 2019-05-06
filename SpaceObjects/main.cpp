@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    enemies.erase(it);
+                    it->dead = true;
                     break;
                 }
             }
@@ -338,12 +338,28 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    asteroids.erase(it);
+                    it->dead = true;
                     break;
                 }
             }
 
             shoot = false;
+        }
+
+        for (auto it = enemies.begin(); it != enemies.end(); it++) {
+            if (it->dead) {
+                if (it->die()) {
+                    enemies.erase(it--);
+                }
+            }
+        }
+
+        for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
+            if (it->dead) {
+                if (it->die()) {
+                    asteroids.erase(it--);
+                }
+            }
         }
 
         // Draw skybox
@@ -460,6 +476,7 @@ int main(int argc, char **argv) {
             // Draw enemies
             for (const auto &model : enemies) {
                 const auto local = perspective_transform * model.getWorldTransform();
+                const auto death_coef = float(model.death_countdown) / 60;
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);
@@ -470,7 +487,7 @@ int main(int argc, char **argv) {
                     const bool use_texture = object.haveTexture();
                     program.SetUniform("use_texture", use_texture);
 
-                    const float opacity = object.getOpacity();
+                    const float opacity = death_coef * object.getOpacity();
                     program.SetUniform("opacity", opacity);
 
                     object.draw();

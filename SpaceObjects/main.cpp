@@ -63,6 +63,7 @@ static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     my = y1;
 }
 
+static bool shoot = false;
 // Callback for actions with mouse buttons
 // Permit camera movements with left button pressed only
 static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
@@ -74,6 +75,10 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
         } else if (action == GLFW_RELEASE) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             permitMouseMove = false;
+        }
+    } else if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+           shoot = true;
         }
     }
 }
@@ -276,6 +281,32 @@ int main(int argc, char **argv) {
         const auto view_transform = camera.getViewTransform();
         const auto perspective_transform = perspective * view_transform;
 
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        // Kill enemies
+        if (shoot) {
+
+            for (auto it = enemies.begin(); it != enemies.end(); it++) {
+                const auto model = view_transform * it->getWorldTransform();
+                const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
+                const auto bbox_min = glm::project(it->bbox.min, model, perspective, view_port);
+                const auto bbox_max = glm::project(it->bbox.max, model, perspective, view_port);
+
+                const float min_x = glm::min(bbox_min.x, bbox_max.x);
+                const float min_y = glm::min(bbox_min.y, bbox_max.y);
+                const float max_x = glm::max(bbox_min.x, bbox_max.x);
+                const float max_y = glm::max(bbox_min.y, bbox_max.y);
+                if (xpos >= min_x && xpos <= max_x &&
+                    HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
+
+                    enemies.erase(it);
+                    break;
+                }
+            }
+            shoot = false;
+        }
+
         // Draw skybox
         {
             auto& program = shader_programs[ShaderType::SKYBOX];
@@ -384,8 +415,6 @@ int main(int argc, char **argv) {
 
             program.StartUseShader();
 
-            double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
             program.SetUniform("position", glm::vec2(2.0 * xpos / WIDTH - 1.0, -2.0 * ypos / HEIGHT + 1.0));
 
             crosshair.draw();

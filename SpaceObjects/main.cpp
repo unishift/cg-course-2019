@@ -2,6 +2,7 @@
 #include "common.h"
 #include "ShaderProgram.h"
 #include "ModelFactories.h"
+#include "Camera.h"
 
 // External dependencies
 #define GLFW_DLL
@@ -41,17 +42,21 @@ static bool permitMouseMove = false;
 // Prepare transformations
 //const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 1000.0f);
 const auto perspective = glm::infinitePerspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f);
-static glm::vec3 camera_position(0.0f, 0.0f, -3.0f);
-static glm::mat4 camera_rot(1.0f);
+//static glm::vec3 camera_position(0.0f, 0.0f, -3.0f);
+//static glm::mat4 camera_rot(1.0f);
 
+static float yaw = 0.0;
+static float pitch = 0.0;
 // Callback for mouse movement
 static void mouseMove(GLFWwindow *window, double xpos, double ypos) {
     auto x1 = float(0.01 * xpos);
     auto y1 = float(0.01 * ypos);
 
     if (permitMouseMove) {
-        camera_rot = glm::rotate(glm::mat4(1.0f), float(my - y1), glm::vec3(1.0f, 0.0f, 0.0f)) *
-                     glm::rotate(glm::mat4(1.0f), float(mx - x1), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_rot;
+        yaw = glm::clamp(yaw + float(my - y1), -M_PI_2f32, M_PI_2f32);
+        pitch += mx - x1;
+//        camera_rot = glm::rotate(glm::mat4(1.0f), float(my - y1), glm::vec3(1.0f, 0.0f, 0.0f)) *
+//                     glm::rotate(glm::mat4(1.0f), float(mx - x1), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_rot;
     }
 
     mx = x1;
@@ -73,11 +78,6 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
     }
 }
 
-enum class CameraMode {
-    FIRST_PERSON,
-    THIRD_PERSON,
-};
-
 // Callback for movement controls
 // W - forward
 // A - left
@@ -88,7 +88,6 @@ enum class CameraMode {
 // SPACE - reset position
 float multiplier = 0.1f;
 glm::vec3 step = {0.0f, 0.0f, 0.0f};
-float rot_step = 0.0f;
 CameraMode camera_mode = CameraMode::THIRD_PERSON;
 static void keyboardControls(GLFWwindow *window, int key, int scancode, int action, int mods) {
     switch (key) {
@@ -132,20 +131,6 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
                 step -= up;
             } else if (action == GLFW_RELEASE) {
                 step += up;
-            }
-            break;
-        case GLFW_KEY_Q:
-            if (action == GLFW_PRESS) {
-                rot_step += 0.1f;
-            } else if (action == GLFW_RELEASE) {
-                rot_step -= 0.1f;
-            }
-            break;
-        case GLFW_KEY_E:
-            if (action == GLFW_PRESS) {
-                rot_step -= 0.1f;
-            } else if (action == GLFW_RELEASE) {
-                rot_step += 0.1f;
             }
             break;
         case GLFW_KEY_LEFT_SHIFT:
@@ -239,6 +224,8 @@ int main(int argc, char **argv) {
     });
     GL_CHECK_ERRORS;
 
+    Camera camera;
+
     const auto skybox = SkyBox::create({
         "models/necro_nebula/GalaxyTex_PositiveX.png",
         "models/necro_nebula/GalaxyTex_NegativeX.png",
@@ -254,14 +241,13 @@ int main(int argc, char **argv) {
 
     ModelFactory model_factory;
 
-    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, 0.0f, 0.0f}, {0.0f, M_PI, 0.0f});
+    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, -3.0f}, {0.0f, M_PI, 0.0f});
 
     std::list<Model> enemies;
 
     glfwSwapInterval(1); // force 60 frames per second
 
     glm::vec3 smooth_step(0.0f);
-    float smooth_rot_step = 0.0f;
     const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
     glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
 
@@ -282,14 +268,13 @@ int main(int argc, char **argv) {
         const auto time = glfwGetTime();
 
         smooth_step += 0.05f * (step - smooth_step);
-        smooth_rot_step += 0.05f * (rot_step - smooth_rot_step);
+        const auto camera_shift = multiplier * smooth_step;
+        camera.mode = camera_mode;
+        camera.rot = glm::quat({yaw, pitch, 0.0f});
+        camera.move(camera_shift);
 
-        camera_rot = glm::rotate(glm::mat4(1.0f), smooth_rot_step, {0.0f, 0.0f, 1.0f}) * camera_rot;
-        const auto camera_position_diff = multiplier * glm::transpose(glm::mat3(camera_rot)) * smooth_step;
-        camera_position -= camera_position_diff;
-        const auto camera_shift = camera_mode == CameraMode::FIRST_PERSON ? glm::vec3(0.0f, -0.5f, 1.0f) : glm::vec3(0.0, -3.0f, -10.0f);
-        const auto world_transform = glm::translate(glm::translate(glm::mat4(1.0f), camera_shift) * camera_rot, camera_position);
-        const auto view_transform = perspective * world_transform;
+        const auto view_transform = camera.getViewTransform();
+        const auto perspective_transform = perspective * view_transform;
 
         // Draw skybox
         {
@@ -298,7 +283,7 @@ int main(int argc, char **argv) {
             glDepthMask(GL_FALSE);
             program.StartUseShader();
 
-            const auto transform = perspective * camera_rot;
+            const auto transform = perspective * glm::mat4(glm::mat3(view_transform));
             program.SetUniform("transform", transform);
 
             skybox.draw();
@@ -315,10 +300,10 @@ int main(int argc, char **argv) {
 
             program.StartUseShader();
 
-            program.SetUniform("world_transform", glm::translate(glm::mat4(1.0f), camera_position + particles_state));
-            program.SetUniform("perspective_transform", perspective * camera_rot);
+            program.SetUniform("world_transform", glm::translate(glm::mat4(1.0f), particles_state - camera.position));
+            program.SetUniform("perspective_transform", perspective * glm::mat4(glm::mat3(view_transform)));
 
-            program.SetUniform("velocity", enemies_speed - camera_position_diff);
+            program.SetUniform("velocity", enemies_speed - camera_shift);
 
             particles.draw();
 
@@ -330,7 +315,7 @@ int main(int argc, char **argv) {
             auto& program = shader_programs[ShaderType::CLASSIC];
 
             // Modify objects
-            main_ship.move(camera_position_diff);
+            main_ship.move(camera_shift);
 
             if (rand() % 300 == 0) {
                 const float x = rand() % 50 - 25;
@@ -350,7 +335,7 @@ int main(int argc, char **argv) {
             GL_CHECK_ERRORS;
 
             {
-                const auto local = view_transform * main_ship.getWorldTransform();
+                const auto local = perspective_transform * main_ship.getWorldTransform();
                 for (const auto &object : main_ship.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);
@@ -371,7 +356,7 @@ int main(int argc, char **argv) {
 
             // Draw objects
             for (const auto &model : enemies) {
-                const auto local = view_transform * model.getWorldTransform();
+                const auto local = perspective_transform * model.getWorldTransform();
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);

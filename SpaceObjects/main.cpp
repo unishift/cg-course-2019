@@ -265,6 +265,7 @@ int main(int argc, char **argv) {
 
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
 
+    float main_ship_hp = 100.0;
     auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, -3.0f}, {0.0f, M_PI, 0.0f});
 
     std::list<Model> enemies;
@@ -280,7 +281,7 @@ int main(int argc, char **argv) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Game loop
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window) && main_ship_hp > 0.0f) {
         glfwPollEvents();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -379,6 +380,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (intersect(main_ship.getBBox(), it->getBBox())) {
+                    main_ship_hp -= it->damage;
                     enemies.erase(it--);
                     continue;
                 }
@@ -430,6 +432,7 @@ int main(int argc, char **argv) {
             }
 
             program.StopUseShader();
+            std::cout << "Health Points: " << main_ship_hp << '\r' << std::flush;
         }
 
         // Draw crosshair
@@ -446,7 +449,9 @@ int main(int argc, char **argv) {
         }
 
         glfwSwapBuffers(window);
+
     }
+    std::cout << "\nGame Over!" << std::endl;
 
     glfwTerminate();
     return 0;

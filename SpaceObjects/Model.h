@@ -25,6 +25,8 @@ class Model {
     glm::mat4 rot;
     float scale_coef = 1.0;
 
+    float damage = 10.0;
+
     Model() = default;
 
     explicit Model(const std::string& path);

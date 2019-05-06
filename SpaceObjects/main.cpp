@@ -205,6 +205,15 @@ int main(int argc, char **argv) {
     while (gl_error != GL_NO_ERROR)
         gl_error = glGetError();
 
+    glViewport(0, 0, WIDTH, HEIGHT);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    GL_CHECK_ERRORS;
+
+    std::cout << "Initializing environment... ";
+    std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
+
+    std::cout << "Compiling shaders... ";
+
     std::unordered_map<ShaderType, ShaderProgram> shader_programs;
     shader_programs[ShaderType::CLASSIC] = ShaderProgram({
         {GL_VERTEX_SHADER,   "shaders/classic_vertex.glsl"},
@@ -229,7 +238,11 @@ int main(int argc, char **argv) {
     });
     GL_CHECK_ERRORS;
 
+    std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
+
     Camera camera;
+
+    std::cout << "Loading skybox... ";
 
     const auto skybox = SkyBox::create({
         "models/necro_nebula/GalaxyTex_PositiveX.png",
@@ -240,11 +253,17 @@ int main(int argc, char **argv) {
         "models/necro_nebula/GalaxyTex_NegativeZ.png",
     });
 
+    std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
+
     Particles particles(1000);
 
     Crosshair crosshair;
 
+    std::cout << "Loading models... ";
+
     ModelFactory model_factory;
+
+    std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
 
     auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, -3.0f}, {0.0f, M_PI, 0.0f});
 
@@ -264,8 +283,6 @@ int main(int argc, char **argv) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        glViewport(0, 0, WIDTH, HEIGHT);
-        GL_CHECK_ERRORS;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK_ERRORS;
 

@@ -48,7 +48,8 @@ class Model {
     }
 
     BBox getBBox() const {
-        return BBox(bbox.min + world_pos, bbox.max + world_pos);
+        const auto transform = getWorldTransform();
+        return BBox(transform * glm::vec4(bbox.min, 1.0f), transform * glm::vec4(bbox.max, 1.0f));
     }
 
     bool dead = false;

@@ -5,7 +5,7 @@ layout (line_strip, max_vertices = 2) out;
 
 in vec3 point_position[];
 
-out vec3 color;
+out vec4 color;
 
 uniform mat4 world_transform;
 uniform mat4 perspective_transform;
@@ -18,11 +18,11 @@ void main() {
 
     vec4 position4 = mod(world_transform * vec4(position, 1.0f) + radius, 2 * radius) - radius;
     gl_Position = perspective_transform * position4;
-    color = vec3(4.0f, 4.0f, 4.0f);
+    color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     EmitVertex();
 
     gl_Position = perspective_transform * (position4 - world_transform * vec4(0.75f * velocity, 0.0f));
-    color = vec3(1.0f, 1.0f, 1.0f);
+    color = 0.1f * vec4(1.0f, 1.0f, 1.0f, 1.0f);
     EmitVertex();
 
     EndPrimitive();

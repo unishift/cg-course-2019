@@ -290,10 +290,13 @@ int main(int argc, char **argv) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Game loop
     while (!glfwWindowShouldClose(window) && main_ship_hp > 0.0f) {
+        // Tech stuff
         glfwPollEvents();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK_ERRORS;
+
+        // Game logic
 
         // Modify environment
         const auto time = glfwGetTime();
@@ -310,14 +313,19 @@ int main(int argc, char **argv) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
+        main_ship.move(camera_shift);
+        particles_state += enemies_speed;
+
         // Kill targets
         if (shoot) {
 
-            for (auto & enemie : enemies) {
-                const auto model = view_transform * enemie.getWorldTransform();
+            for (auto& enemy : enemies) {
+                if (enemy.dead) continue;
+
+                const auto model = view_transform * enemy.getWorldTransform();
                 const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
-                const auto bbox_min = glm::project(enemie.bbox.min, model, perspective, view_port);
-                const auto bbox_max = glm::project(enemie.bbox.max, model, perspective, view_port);
+                const auto bbox_min = glm::project(enemy.bbox.min, model, perspective, view_port);
+                const auto bbox_max = glm::project(enemy.bbox.max, model, perspective, view_port);
 
                 const float min_x = glm::min(bbox_min.x, bbox_max.x);
                 const float min_y = glm::min(bbox_min.y, bbox_max.y);
@@ -326,12 +334,14 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    enemie.dead = true;
+                    enemy.dead = true;
                     break;
                 }
             }
 
-            for (auto & asteroid : asteroids) {
+            for (auto& asteroid : asteroids) {
+                if (asteroid.dead) continue;
+
                 const auto model = view_transform * asteroid.getWorldTransform();
                 const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
                 const auto bbox_min = glm::project(asteroid.bbox.min, model, perspective, view_port);
@@ -352,26 +362,67 @@ int main(int argc, char **argv) {
             shoot = false;
         }
 
+        // Process enemies
         for (auto it = enemies.begin(); it != enemies.end(); it++) {
-            if (it->dead) {
-                if (it->die()) {
+            if (!it->dead) {
+                if (intersect(main_ship.getBBox(), it->getBBox())) {
+                    main_ship_hp -= it->damage;
+                    it->dead = true;
+                } else if (it->world_pos.z > 200.0f) {
                     enemies.erase(it--);
                 }
-            } else {
+
+                // Shoot
                 if (rand() % 1000 == 0) {
                     asteroids.emplace_back(model_factory.get_model(ModelName::MYST_ASTEROID, it->world_pos, glm::vec3(0.0f), 0.1f),
                         0.5f * glm::normalize(camera.position - it->world_pos));
                 }
+            } else {
+                if (it->die()) {
+                    enemies.erase(it--);
+                }
             }
+            it->move(enemies_speed);
         }
 
+        // Process asteroids
         for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
-            if (it->dead) {
+            if (!it->dead) {
+                if (intersect(main_ship.getBBox(), it->getBBox())) {
+                    main_ship_hp -= it->damage;
+                    it->dead = true;
+                } else if (it->world_pos.z > 200.0f) {
+                    asteroids.erase(it--);
+                }
+            } else {
                 if (it->die()) {
                     asteroids.erase(it--);
                 }
             }
+            it->moveAuto();
         }
+
+        // Enemies spawn
+        if (rand() % 300 == 0) {
+            const float x = rand() % 50 - 25;
+            const float y = rand() % 50 - 25;
+
+            enemies.emplace_back(model_factory.get_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
+        }
+
+        // Asteroids spawn
+        if (rand() % 300 == 0) {
+            const float x = rand() % 50 - 25;
+            const float y = rand() % 50 - 25;
+            const glm::vec3 src(x, y, -200.0f);
+            const glm::vec3 velocity = glm::normalize(camera.position - src);
+
+            asteroids.emplace_back(model_factory.get_model(ModelName::ASTEROID1, src, glm::vec3(0.0f), 1.0f), velocity);
+        }
+        
+        std::cout << "Health Points: " << main_ship_hp << '\r' << std::flush;
+
+        // Drawing
 
         // Draw skybox
         {
@@ -393,8 +444,6 @@ int main(int argc, char **argv) {
         {
             auto& program = shader_programs[ShaderType::PARTICLES_ACTIVE];
 
-            particles_state += enemies_speed;
-
             program.StartUseShader();
 
             program.SetUniform("world_transform", glm::translate(glm::mat4(1.0f), particles_state - camera.position));
@@ -410,57 +459,6 @@ int main(int argc, char **argv) {
         // Draw objects
         {
             auto& program = shader_programs[ShaderType::CLASSIC];
-
-            // Modify objects
-            main_ship.move(camera_shift);
-
-            // Enemies
-            // Spawn
-            if (rand() % 300 == 0) {
-                const float x = rand() % 50 - 25;
-                const float y = rand() % 50 - 25;
-                enemies.push_back(model_factory.get_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
-            }
-
-            // Move
-            for (auto it = enemies.begin(); it != enemies.end(); it++) {
-                it->move(enemies_speed);
-                if (it->world_pos.z > 200.0f) {
-                    enemies.erase(it--);
-                    continue;
-                }
-
-                if (intersect(main_ship.getBBox(), it->getBBox())) {
-                    main_ship_hp -= it->damage;
-                    enemies.erase(it--);
-                    continue;
-                }
-            }
-
-            // Asteroids
-            if (rand() % 300 == 0) {
-                const float x = rand() % 50 - 25;
-                const float y = rand() % 50 - 25;
-                const glm::vec3 src(x, y, -200.0f);
-                const glm::vec3 velocity = glm::normalize(camera.position - src);
-                asteroids.emplace_back(model_factory.get_model(ModelName::ASTEROID1, src, glm::vec3(0.0f), 1.0f), velocity);
-            }
-
-            // Move
-            for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
-                it->moveAuto();
-                if (it->world_pos.z > 200.0f) {
-                    asteroids.erase(it--);
-                    continue;
-                }
-
-                if (intersect(main_ship.getBBox(), it->getBBox())) {
-                    main_ship_hp -= it->damage;
-                    asteroids.erase(it--);
-                    continue;
-                }
-            }
-
             program.StartUseShader();
             GL_CHECK_ERRORS;
 
@@ -529,9 +527,9 @@ int main(int argc, char **argv) {
             }
 
             program.StopUseShader();
-            std::cout << "Health Points: " << main_ship_hp << '\r' << std::flush;
         }
 
+        // Draw dead objects
         {
             auto& program = shader_programs[ShaderType::EXPLOSION];
 

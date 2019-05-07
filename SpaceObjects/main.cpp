@@ -307,11 +307,11 @@ int main(int argc, char **argv) {
         // Kill targets
         if (shoot) {
 
-            for (auto it = enemies.begin(); it != enemies.end(); it++) {
-                const auto model = view_transform * it->getWorldTransform();
+            for (auto & enemie : enemies) {
+                const auto model = view_transform * enemie.getWorldTransform();
                 const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
-                const auto bbox_min = glm::project(it->bbox.min, model, perspective, view_port);
-                const auto bbox_max = glm::project(it->bbox.max, model, perspective, view_port);
+                const auto bbox_min = glm::project(enemie.bbox.min, model, perspective, view_port);
+                const auto bbox_max = glm::project(enemie.bbox.max, model, perspective, view_port);
 
                 const float min_x = glm::min(bbox_min.x, bbox_max.x);
                 const float min_y = glm::min(bbox_min.y, bbox_max.y);
@@ -320,16 +320,16 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    it->dead = true;
+                    enemie.dead = true;
                     break;
                 }
             }
 
-            for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
-                const auto model = view_transform * it->getWorldTransform();
+            for (auto & asteroid : asteroids) {
+                const auto model = view_transform * asteroid.getWorldTransform();
                 const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
-                const auto bbox_min = glm::project(it->bbox.min, model, perspective, view_port);
-                const auto bbox_max = glm::project(it->bbox.max, model, perspective, view_port);
+                const auto bbox_min = glm::project(asteroid.bbox.min, model, perspective, view_port);
+                const auto bbox_max = glm::project(asteroid.bbox.max, model, perspective, view_port);
 
                 const float min_x = glm::min(bbox_min.x, bbox_max.x);
                 const float min_y = glm::min(bbox_min.y, bbox_max.y);
@@ -338,7 +338,7 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    it->dead = true;
+                    asteroid.dead = true;
                     break;
                 }
             }
@@ -350,6 +350,11 @@ int main(int argc, char **argv) {
             if (it->dead) {
                 if (it->die()) {
                     enemies.erase(it--);
+                }
+            } else {
+                if (rand() % 1000 == 0) {
+                    asteroids.emplace_back(model_factory.get_model(ModelName::MYST_ASTEROID, it->world_pos, glm::vec3(0.0f), 0.1f),
+                        0.5f * glm::normalize(camera.position - it->world_pos));
                 }
             }
         }
@@ -498,6 +503,7 @@ int main(int argc, char **argv) {
             // Draw asteroids
             for (const auto &model : asteroids) {
                 const auto local = perspective_transform * model.getWorldTransform();
+                const auto death_coef = float(model.death_countdown) / 60;
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);
@@ -508,7 +514,7 @@ int main(int argc, char **argv) {
                     const bool use_texture = object.haveTexture();
                     program.SetUniform("use_texture", use_texture);
 
-                    const float opacity = object.getOpacity();
+                    const float opacity = death_coef * object.getOpacity();
                     program.SetUniform("opacity", opacity);
 
                     object.draw();

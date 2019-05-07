@@ -170,6 +170,7 @@ enum class ShaderType {
     PARTICLES_PASSIVE,
     PARTICLES_ACTIVE,
     CROSSHAIR,
+    EXPLOSION,
 };
 
 int main(int argc, char **argv) {
@@ -236,6 +237,11 @@ int main(int argc, char **argv) {
         {GL_VERTEX_SHADER,   "shaders/crosshair_vertex.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/crosshair_fragment.glsl"},
     });
+    shader_programs[ShaderType::EXPLOSION] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/explosion_vertex.glsl"},
+        {GL_GEOMETRY_SHADER, "shaders/explosion_geometry.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/explosion_fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
 
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
@@ -275,7 +281,7 @@ int main(int argc, char **argv) {
     glfwSwapInterval(1); // force 60 frames per second
 
     glm::vec3 smooth_step(0.0f);
-    const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
+    const glm::vec3 enemies_speed(0.0f, 0.0f, 0.0f);
     glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
 
     glEnable(GL_MULTISAMPLE);
@@ -480,8 +486,63 @@ int main(int argc, char **argv) {
 
             // Draw enemies
             for (const auto &model : enemies) {
+                if (model.dead) continue;
+                const auto local = perspective_transform * model.getWorldTransform();
+                for (const auto &object : model.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = object.getOpacity();
+                    program.SetUniform("opacity", opacity);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
+
+            // Draw asteroids
+            for (const auto &model : asteroids) {
+                if (model.dead) continue;
+                const auto local = perspective_transform * model.getWorldTransform();
+                for (const auto &object : model.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = object.getOpacity();
+                    program.SetUniform("opacity", opacity);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
+
+            program.StopUseShader();
+            std::cout << "Health Points: " << main_ship_hp << '\r' << std::flush;
+        }
+
+        {
+            auto& program = shader_programs[ShaderType::EXPLOSION];
+
+            program.StartUseShader();
+
+            // Draw enemies
+            for (const auto &model : enemies) {
+                if (!model.dead) continue;
                 const auto local = perspective_transform * model.getWorldTransform();
                 const auto death_coef = float(model.death_countdown) / 60;
+                program.SetUniform("magnitude", (1.0f - death_coef) * 5.0f);
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);
@@ -502,8 +563,10 @@ int main(int argc, char **argv) {
 
             // Draw asteroids
             for (const auto &model : asteroids) {
+                if (!model.dead) continue;
                 const auto local = perspective_transform * model.getWorldTransform();
                 const auto death_coef = float(model.death_countdown) / 60;
+                program.SetUniform("magnitude", (1.0f - death_coef) * 5.0f);
                 for (const auto &object : model.objects) {
                     const auto transform = local * object.getWorldTransform();
                     program.SetUniform("transform", transform);
@@ -523,7 +586,6 @@ int main(int argc, char **argv) {
             }
 
             program.StopUseShader();
-            std::cout << "Health Points: " << main_ship_hp << '\r' << std::flush;
         }
 
         // Draw crosshair

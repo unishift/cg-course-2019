@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
     glfwSwapInterval(1); // force 60 frames per second
 
     glm::vec3 smooth_step(0.0f);
-    const glm::vec3 enemies_speed(0.0f, 0.0f, 0.0f);
+    const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
     glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
 
     glEnable(GL_MULTISAMPLE);

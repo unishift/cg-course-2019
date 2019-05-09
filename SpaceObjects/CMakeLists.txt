@@ -17,7 +17,7 @@ set(SOURCE_FILES
         ModelFactories.cpp
         BBox.h
         BBox.cpp
-        Camera.h)
+        Camera.h Font.cpp Font.h)
 
 set(ADDITIONAL_INCLUDE_DIRS
         dependencies/include/GLAD)
@@ -44,10 +44,11 @@ find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(assimp REQUIRED)
 find_package(DevIL REQUIRED)
+find_package(Freetype REQUIRED)
 
 add_executable(main ${SOURCE_FILES})
 
-target_include_directories(main PRIVATE ${OPENGL_INCLUDE_DIR} ${IL_INCLUDE_DIR})
+target_include_directories(main PRIVATE ${OPENGL_INCLUDE_DIR} ${IL_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
 if(DEVELOP_MODE)
     add_custom_command(TARGET main POST_BUILD COMMAND ln -sfn "${PROJECT_SOURCE_DIR}/shaders" "${PROJECT_BINARY_DIR}/shaders")
     add_custom_command(TARGET main POST_BUILD COMMAND ln -sfn "${PROJECT_SOURCE_DIR}/models" "${PROJECT_BINARY_DIR}/models")
@@ -59,9 +60,9 @@ if(WIN32)
     add_custom_command(TARGET main POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/dependencies/bin" $<TARGET_FILE_DIR:main>)
     #set(CMAKE_MSVCIDE_RUN_PATH ${ADDITIONAL_RUNTIME_LIBRARY_DIRS})
     target_compile_options(main PRIVATE)
-    target_link_libraries(main LINK_PUBLIC ${OPENGL_gl_LIBRARY} glfw3dll glm assimp ${IL_LIBRARIES} ${ILU_LIBRARIES})
+    target_link_libraries(main LINK_PUBLIC ${OPENGL_gl_LIBRARY} glfw3dll glm assimp ${IL_LIBRARIES} ${ILU_LIBRARIES} ${FREETYPE_LIBRARIES})
 else()
     target_compile_options(main PRIVATE -Wnarrowing)
-    target_link_libraries(main LINK_PUBLIC ${OPENGL_gl_LIBRARY} glfw rt dl glm assimp ${IL_LIBRARIES} ${ILU_LIBRARIES})
+    target_link_libraries(main LINK_PUBLIC ${OPENGL_gl_LIBRARY} glfw rt dl glm assimp ${IL_LIBRARIES} ${ILU_LIBRARIES} ${FREETYPE_LIBRARIES})
 endif()
 

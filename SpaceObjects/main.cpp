@@ -3,6 +3,7 @@
 #include "ShaderProgram.h"
 #include "ModelFactories.h"
 #include "Camera.h"
+#include "Font.h"
 
 // External dependencies
 #define GLFW_DLL
@@ -171,6 +172,7 @@ enum class ShaderType {
     PARTICLES_ACTIVE,
     CROSSHAIR,
     EXPLOSION,
+    TEXT,
 };
 
 int main(int argc, char **argv) {
@@ -242,6 +244,10 @@ int main(int argc, char **argv) {
         {GL_GEOMETRY_SHADER, "shaders/explosion_geometry.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/explosion_fragment.glsl"},
     });
+    shader_programs[ShaderType::TEXT] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/text_vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/text_fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
 
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
@@ -277,6 +283,8 @@ int main(int argc, char **argv) {
     std::list<Model> enemies;
 
     std::list<Asteroid> asteroids;
+
+    Font font("models/arial.ttf");
 
     glfwSwapInterval(1); // force 60 frames per second
 
@@ -597,6 +605,22 @@ int main(int argc, char **argv) {
             crosshair.draw();
 
             program.StopUseShader();
+        }
+
+        {
+            auto& program = shader_programs[ShaderType::TEXT];
+
+            program.StartUseShader();
+
+            const auto transform = glm::ortho(0.0f, float(WIDTH), 0.0f, float(HEIGHT));
+            program.SetUniform("transform", glm::translate(transform, {5.0f, 5.0f, 0.0f}));
+
+            program.SetUniform("text_color", glm::vec3(1.0f, 0.0f, 0.0f));
+
+            font.draw("HP: " + std::to_string(int(main_ship_hp)));
+
+            program.StopUseShader();
+            GL_CHECK_ERRORS;
         }
 
         glfwSwapBuffers(window);

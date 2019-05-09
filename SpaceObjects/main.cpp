@@ -297,7 +297,7 @@ int main(int argc, char **argv) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Game loop
-    while (!glfwWindowShouldClose(window) && main_ship_hp > 0.0f) {
+    while (!glfwWindowShouldClose(window)) {
         // Tech stuff
         glfwPollEvents();
 
@@ -320,9 +320,6 @@ int main(int argc, char **argv) {
 
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-
-        main_ship.move(camera_shift);
-        particles_state += enemies_speed;
 
         // Kill targets
         if (shoot) {
@@ -374,7 +371,7 @@ int main(int argc, char **argv) {
         for (auto it = enemies.begin(); it != enemies.end(); it++) {
             if (!it->dead) {
                 if (intersect(main_ship.getBBox(), it->getBBox())) {
-                    main_ship_hp -= it->damage;
+                    main_ship_hp = std::max(main_ship_hp - it->damage, 0.0f);
                     it->dead = true;
                 } else if (it->world_pos.z > 200.0f) {
                     enemies.erase(it--);
@@ -397,7 +394,7 @@ int main(int argc, char **argv) {
         for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
             if (!it->dead) {
                 if (intersect(main_ship.getBBox(), it->getBBox())) {
-                    main_ship_hp -= it->damage;
+                    main_ship_hp = std::max(main_ship_hp - it->damage, 0.0f);
                     it->dead = true;
                 } else if (it->world_pos.z > 200.0f) {
                     asteroids.erase(it--);
@@ -427,7 +424,13 @@ int main(int argc, char **argv) {
 
             asteroids.emplace_back(model_factory.get_model(ModelName::ASTEROID1, src, glm::vec3(0.0f), 1.0f), velocity);
         }
-        
+
+        main_ship.move(camera_shift);
+        if (main_ship_hp == 0.0f) {
+            main_ship.dead = true;
+        }
+        particles_state += enemies_speed;
+
         // Drawing
 
         // Draw skybox
@@ -468,25 +471,7 @@ int main(int argc, char **argv) {
             program.StartUseShader();
             GL_CHECK_ERRORS;
 
-            {
-                const auto local = perspective_transform * main_ship.getWorldTransform();
-                for (const auto &object : main_ship.objects) {
-                    const auto transform = local * object.getWorldTransform();
-                    program.SetUniform("transform", transform);
 
-                    const auto color = object.getDiffuseColor();
-                    program.SetUniform("diffuse_color", color);
-
-                    const bool use_texture = object.haveTexture();
-                    program.SetUniform("use_texture", use_texture);
-
-                    const float opacity = object.getOpacity();
-                    program.SetUniform("opacity", opacity);
-
-                    object.draw();
-                    GL_CHECK_ERRORS;
-                }
-            }
 
             // Draw enemies
             for (const auto &model : enemies) {
@@ -532,6 +517,26 @@ int main(int argc, char **argv) {
                 }
             }
 
+            // Main ship
+            if (!main_ship.dead) {
+                const auto local = perspective_transform * main_ship.getWorldTransform();
+                for (const auto &object : main_ship.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = object.getOpacity();
+                    program.SetUniform("opacity", opacity);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
             program.StopUseShader();
         }
 
@@ -589,6 +594,29 @@ int main(int argc, char **argv) {
                 }
             }
 
+            // Main ship
+            if (main_ship.dead && !main_ship.die()) {
+                const auto local = perspective_transform * main_ship.getWorldTransform();
+                const auto death_coef = float(main_ship.death_countdown) / 60;
+                program.SetUniform("magnitude", (1.0f - death_coef) * 5.0f);
+                for (const auto &object : main_ship.objects) {
+                    const auto transform = local * object.getWorldTransform();
+                    program.SetUniform("transform", transform);
+
+                    const auto color = object.getDiffuseColor();
+                    program.SetUniform("diffuse_color", color);
+
+                    const bool use_texture = object.haveTexture();
+                    program.SetUniform("use_texture", use_texture);
+
+                    const float opacity = death_coef * object.getOpacity();
+                    program.SetUniform("opacity", opacity);
+
+                    object.draw();
+                    GL_CHECK_ERRORS;
+                }
+            }
+
             program.StopUseShader();
         }
 
@@ -616,6 +644,17 @@ int main(int argc, char **argv) {
             program.SetUniform("transform", glm::translate(transform, {5.0f, 5.0f, 0.0f}));
             program.SetUniform("text_color", glm::vec3(1.0f, 0.0f, 0.0f));
             font.draw("HP: " + std::to_string(int(main_ship_hp)));
+
+            // Game Over
+            if (main_ship.dead) {
+                program.SetUniform("transform", glm::translate(transform, {WIDTH / 2.0f - 100.0f, HEIGHT / 2.0f + 40.f, 0.0f}));
+                program.SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+                font.draw("Game Over");
+
+                program.SetUniform("transform", glm::scale(glm::translate(transform, {WIDTH / 2.0f - 140.0f, HEIGHT / 2.0f - 40.f, 0.0f}), {0.75f, 0.75f, 0.75f}));
+                program.SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+                font.draw("Press ESC to leave");
+            }
 
             program.StopUseShader();
             GL_CHECK_ERRORS;

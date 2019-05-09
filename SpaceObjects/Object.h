@@ -107,7 +107,12 @@ public:
 
 class Crosshair {
     GLuint VAO, VBO;
-    std::vector<GLfloat> vertices;
+    GLfloat vertices[6] {
+        0.0f, 0.02f * sqrtf(3.0f),
+        -0.02f, -0.02f,
+        0.02f, -0.02f,
+    };
+
 public:
 
     Crosshair();
@@ -115,7 +120,7 @@ public:
     void draw() const {
         glBindVertexArray(VAO);
 
-        glDrawArrays(GL_LINE_LOOP, 0, vertices.size() / 2);
+        glDrawArrays(GL_LINE_LOOP, 0, 3);
         GL_CHECK_ERRORS;
 
         glBindVertexArray(0);

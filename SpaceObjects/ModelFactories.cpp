@@ -8,7 +8,7 @@ ModelFactory::ModelFactory() {
         {ModelName::ENTERPRISE_NCC1701D, "models/Enterprise NCC 1701 D/enterprise1701d.obj"},
         {ModelName::REPVENATOR, "models/Venator/export.obj"},
         {ModelName::MYST_ASTEROID, "models/mysterious_asteroid/A2.obj"},
-        {ModelName::ASTEROID1, "models/asteroid1/planet3.obj"},
+        {ModelName::ASTEROID1, "models/asteroid1/asteroid1.obj"},
     };
 
     // Buffer all models
@@ -31,6 +31,8 @@ ModelFactory::ModelFactory() {
             case ModelName::REPVENATOR:
                 break;
             case ModelName::MYST_ASTEROID:
+                break;
+            case ModelName::ASTEROID1:
                 break;
         }
 

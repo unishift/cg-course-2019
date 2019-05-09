@@ -428,8 +428,6 @@ int main(int argc, char **argv) {
             asteroids.emplace_back(model_factory.get_model(ModelName::ASTEROID1, src, glm::vec3(0.0f), 1.0f), velocity);
         }
         
-        std::cout << "Health Points: " << main_ship_hp << '\r' << std::flush;
-
         // Drawing
 
         // Draw skybox
@@ -613,10 +611,10 @@ int main(int argc, char **argv) {
             program.StartUseShader();
 
             const auto transform = glm::ortho(0.0f, float(WIDTH), 0.0f, float(HEIGHT));
+
+            // Health Points
             program.SetUniform("transform", glm::translate(transform, {5.0f, 5.0f, 0.0f}));
-
             program.SetUniform("text_color", glm::vec3(1.0f, 0.0f, 0.0f));
-
             font.draw("HP: " + std::to_string(int(main_ship_hp)));
 
             program.StopUseShader();

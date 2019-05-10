@@ -405,7 +405,7 @@ int main(int argc, char **argv) {
                 // Shoot
                 if (rand() % 1000 == 0) {
                     asteroids.emplace_back(model_factory.get_model(ModelName::ROCKET, it->world_pos),
-                        0.5f * glm::normalize(main_ship.world_pos - it->world_pos));
+                        2.0f * glm::normalize(main_ship.world_pos - it->world_pos));
                 }
             } else {
                 if (it->die()) {

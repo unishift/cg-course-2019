@@ -324,6 +324,10 @@ int main(int argc, char **argv) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
+        if (main_ship.dead) {
+            shoot = false;
+        }
+
         // Check laser status
         if (laser.recharge != 0) {
             shoot = false;

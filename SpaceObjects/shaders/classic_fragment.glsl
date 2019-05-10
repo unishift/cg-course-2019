@@ -15,5 +15,6 @@ void main() {
     } else {
         color = diffuse_color;
     }
+    color *= 0.75;
     color.a = opacity;
 }

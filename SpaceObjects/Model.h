@@ -78,8 +78,8 @@ public:
         rot = glm::toMat4(q) * rot;
     }
 
-    void moveAuto() {
-        world_pos += velocity;
+    void moveAuto(float alpha) {
+        world_pos += alpha * velocity;
     }
 };
 

@@ -290,8 +290,9 @@ int main(int argc, char **argv) {
     glfwSwapInterval(1); // force 60 frames per second
 
     glm::vec3 smooth_step(0.0f);
-    const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
+    glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
     glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
+    float speed_multiplier = 1.0f;
 
     glm::vec3 laser_dst;
 
@@ -408,7 +409,7 @@ int main(int argc, char **argv) {
                 // Shoot
                 if (rand() % 1000 == 0) {
                     asteroids.emplace_back(model_factory.get_model(ModelName::ROCKET, it->world_pos),
-                        2.0f * glm::normalize(main_ship.world_pos - it->world_pos));
+                        speed_multiplier * 2.0f * glm::normalize(main_ship.world_pos - it->world_pos));
                 }
             } else {
                 if (it->die()) {
@@ -416,7 +417,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
             }
-            it->move(enemies_speed);
+            it->move(speed_multiplier * enemies_speed);
             it++;
         }
 
@@ -436,7 +437,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
             }
-            it->moveAuto();
+            it->moveAuto(speed_multiplier);
             it++;
         }
 
@@ -456,7 +457,10 @@ int main(int argc, char **argv) {
         if (main_ship_hp == 0.0f) {
             main_ship.dead = true;
         }
-        particles_state += enemies_speed;
+
+        particles_state += speed_multiplier * enemies_speed;
+
+        speed_multiplier += 0.0001f;
 
         // Drawing
 

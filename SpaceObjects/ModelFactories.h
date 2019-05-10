@@ -34,8 +34,8 @@ public:
     }
 
     Asteroid get_random_asteroid(const glm::vec3& position, const glm::vec3& target) const {
-        const float x = rand() % 100 - 50;
-        const float y = rand() % 50 - 25;
+        const float x = rand() % 200 - 100;
+        const float y = rand() % 100 - 25;
         const float scale = (rand() % 50) / 50.0f + 0.5f;
         const auto src = glm::vec3(x, y, -500.0f) + position;
         const glm::vec3 velocity = glm::normalize(target - src);

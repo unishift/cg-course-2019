@@ -346,13 +346,29 @@ int main(int argc, char **argv) {
                 if (enemy.dead) continue;
 
                 const auto model = view_transform * enemy.getWorldTransform();
-                const auto bbox_min = glm::project(enemy.bbox.min, model, perspective, view_port);
-                const auto bbox_max = glm::project(enemy.bbox.max, model, perspective, view_port);
+                const auto bbox = enemy.bbox;
+                float min_x = INFINITY;
+                float min_y = INFINITY;
+                float max_x = -INFINITY;
+                float max_y = -INFINITY;
 
-                const float min_x = glm::min(bbox_min.x, bbox_max.x);
-                const float min_y = glm::min(bbox_min.y, bbox_max.y);
-                const float max_x = glm::max(bbox_min.x, bbox_max.x);
-                const float max_y = glm::max(bbox_min.y, bbox_max.y);
+                for (const auto pos : {glm::vec3(bbox.min.x, bbox.min.y, bbox.min.z),
+                                       glm::vec3(bbox.min.x, bbox.min.y, bbox.max.z),
+                                       glm::vec3(bbox.min.x, bbox.max.y, bbox.min.z),
+                                       glm::vec3(bbox.min.x, bbox.max.y, bbox.max.z),
+                                       glm::vec3(bbox.max.x, bbox.min.y, bbox.min.z),
+                                       glm::vec3(bbox.max.x, bbox.min.y, bbox.max.z),
+                                       glm::vec3(bbox.max.x, bbox.max.y, bbox.min.z),
+                                       glm::vec3(bbox.max.x, bbox.max.y, bbox.max.z)}) {
+
+                    const auto tmp = glm::project(pos, model, perspective, view_port);
+
+                    min_x = glm::min(min_x, tmp.x);
+                    min_y = glm::min(min_y, tmp.y);
+                    max_x = glm::max(max_x, tmp.x);
+                    max_y = glm::max(max_y, tmp.y);
+                }
+
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
@@ -370,13 +386,29 @@ int main(int argc, char **argv) {
                 if (asteroid.dead) continue;
 
                 const auto model = view_transform * asteroid.getWorldTransform();
-                const auto bbox_min = glm::project(asteroid.bbox.min, model, perspective, view_port);
-                const auto bbox_max = glm::project(asteroid.bbox.max, model, perspective, view_port);
+                const auto bbox = asteroid.bbox;
+                float min_x = INFINITY;
+                float min_y = INFINITY;
+                float max_x = -INFINITY;
+                float max_y = -INFINITY;
 
-                const float min_x = glm::min(bbox_min.x, bbox_max.x);
-                const float min_y = glm::min(bbox_min.y, bbox_max.y);
-                const float max_x = glm::max(bbox_min.x, bbox_max.x);
-                const float max_y = glm::max(bbox_min.y, bbox_max.y);
+                for (const auto pos : {glm::vec3(bbox.min.x, bbox.min.y, bbox.min.z),
+                                       glm::vec3(bbox.min.x, bbox.min.y, bbox.max.z),
+                                       glm::vec3(bbox.min.x, bbox.max.y, bbox.min.z),
+                                       glm::vec3(bbox.min.x, bbox.max.y, bbox.max.z),
+                                       glm::vec3(bbox.max.x, bbox.min.y, bbox.min.z),
+                                       glm::vec3(bbox.max.x, bbox.min.y, bbox.max.z),
+                                       glm::vec3(bbox.max.x, bbox.max.y, bbox.min.z),
+                                       glm::vec3(bbox.max.x, bbox.max.y, bbox.max.z)}) {
+
+                    const auto tmp = glm::project(pos, model, perspective, view_port);
+
+                    min_x = glm::min(min_x, tmp.x);
+                    min_y = glm::min(min_y, tmp.y);
+                    max_x = glm::max(max_x, tmp.x);
+                    max_y = glm::max(max_y, tmp.y);
+                }
+
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 

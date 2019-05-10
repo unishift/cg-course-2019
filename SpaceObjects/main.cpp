@@ -41,10 +41,7 @@ const glm::vec3 up(0.0f, scale, 0.0f);
 static bool permitMouseMove = false;
 
 // Prepare transformations
-//const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 1000.0f);
-const auto perspective = glm::infinitePerspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f);
-//static glm::vec3 camera_position(0.0f, 0.0f, -3.0f);
-//static glm::mat4 camera_rot(1.0f);
+const auto perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / HEIGHT, 0.1f, 1000.0f);
 
 static float yaw = 0.0;
 static float pitch = 0.0;
@@ -172,6 +169,7 @@ enum class ShaderType {
     CROSSHAIR,
     EXPLOSION,
     TEXT,
+    LASER,
 };
 
 int main(int argc, char **argv) {
@@ -243,6 +241,10 @@ int main(int argc, char **argv) {
         {GL_VERTEX_SHADER,   "shaders/text_vertex.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/text_fragment.glsl"},
     });
+    shader_programs[ShaderType::LASER] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/laser_vertex.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/laser_fragment.glsl"},
+    });
     GL_CHECK_ERRORS;
 
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
@@ -265,6 +267,7 @@ int main(int argc, char **argv) {
     Particles particles(1000);
 
     Crosshair crosshair;
+    Laser laser;
 
     std::cout << "Loading models... ";
 
@@ -286,7 +289,9 @@ int main(int argc, char **argv) {
     glm::vec3 smooth_step(0.0f);
     const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
     glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
+    glm::vec3 target_position;
 
+    const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -316,14 +321,14 @@ int main(int argc, char **argv) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
+        const bool was_shot = shoot;
         // Kill targets
         if (shoot) {
 
-            for (auto& enemy : enemies) {
+            for (auto &enemy : enemies) {
                 if (enemy.dead) continue;
 
                 const auto model = view_transform * enemy.getWorldTransform();
-                const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
                 const auto bbox_min = glm::project(enemy.bbox.min, model, perspective, view_port);
                 const auto bbox_max = glm::project(enemy.bbox.max, model, perspective, view_port);
 
@@ -334,16 +339,19 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
+                    target_position = enemy.world_pos;
                     enemy.dead = true;
+                    shoot = false;
                     break;
                 }
             }
+        }
 
+        if (shoot) {
             for (auto& asteroid : asteroids) {
                 if (asteroid.dead) continue;
 
                 const auto model = view_transform * asteroid.getWorldTransform();
-                const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
                 const auto bbox_min = glm::project(asteroid.bbox.min, model, perspective, view_port);
                 const auto bbox_max = glm::project(asteroid.bbox.max, model, perspective, view_port);
 
@@ -354,11 +362,17 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
+                    target_position = asteroid.world_pos;
                     asteroid.dead = true;
+                    shoot = false;
                     break;
                 }
             }
+        }
 
+        if (shoot) {
+            const auto tmp = glm::inverse(perspective_transform) * glm::vec4(2.0 * xpos / WIDTH - 1.0, -2.0 * ypos / HEIGHT + 1.0, 1.0f, 1.0f);
+            target_position = glm::vec3(tmp) / tmp.w;
             shoot = false;
         }
 
@@ -649,6 +663,18 @@ int main(int argc, char **argv) {
 
             program.StopUseShader();
             GL_CHECK_ERRORS;
+        }
+
+        if (was_shot) {
+            auto& program = shader_programs[ShaderType::LASER];
+
+            program.StartUseShader();
+
+            program.SetUniform("transform", perspective_transform);
+
+            laser.draw(main_ship.world_pos, target_position);
+
+            program.StopUseShader();
         }
 
         glfwSwapBuffers(window);

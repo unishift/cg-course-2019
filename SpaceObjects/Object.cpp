@@ -193,3 +193,18 @@ Crosshair::Crosshair() {
 
     glBindVertexArray(0);
 }
+
+Laser::Laser() {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, 2 * 3 * sizeof(GLfloat), nullptr, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glBindVertexArray(0);
+}

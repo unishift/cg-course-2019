@@ -127,4 +127,28 @@ public:
     }
 };
 
+class Laser {
+    GLuint VAO, VBO;
+
+public:
+
+    Laser();
+
+    void draw(const glm::vec3& src, const glm::vec3& dst) const {
+        glBindVertexArray(VAO);
+
+        GLfloat vertices[] {
+            src.x, src.y, src.z,
+            dst.x, dst.y, dst.z,
+        };
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glDrawArrays(GL_LINES, 0, 2);
+
+        glBindVertexArray(0);
+    }
+};
+
 #endif //SPACEOBJECTS_OBJECT_H

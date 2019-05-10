@@ -131,6 +131,7 @@ class Laser {
     GLuint VAO, VBO;
 
 public:
+    int recharge = 0;
 
     Laser();
 

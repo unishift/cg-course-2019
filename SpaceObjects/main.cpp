@@ -267,7 +267,9 @@ int main(int argc, char **argv) {
     Particles particles(1000);
 
     Crosshair crosshair;
+
     Laser laser;
+    constexpr int laser_recharge_rate = 15;
 
     std::cout << "Loading models... ";
 
@@ -289,7 +291,8 @@ int main(int argc, char **argv) {
     glm::vec3 smooth_step(0.0f);
     const glm::vec3 enemies_speed(0.0f, 0.0f, 0.5f);
     glm::vec3 particles_state(0.0f, 0.0f, 0.0f);
-    glm::vec3 target_position;
+
+    glm::vec3 laser_dst;
 
     const glm::vec4 view_port(0.0f, 0.0f, WIDTH, HEIGHT);
     glEnable(GL_MULTISAMPLE);
@@ -321,7 +324,15 @@ int main(int argc, char **argv) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
-        const bool was_shot = shoot;
+        // Check laser status
+        if (laser.recharge != 0) {
+            shoot = false;
+            laser.recharge--;
+            laser_dst += enemies_speed + camera_shift;
+        } else if (shoot) {
+            laser.recharge = laser_recharge_rate;
+        }
+
         // Kill targets
         if (shoot) {
 
@@ -339,7 +350,7 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    target_position = enemy.world_pos;
+                    laser_dst = enemy.world_pos;
                     enemy.dead = true;
                     shoot = false;
                     break;
@@ -362,7 +373,7 @@ int main(int argc, char **argv) {
                 if (xpos >= min_x && xpos <= max_x &&
                     HEIGHT - ypos >= min_y && HEIGHT - ypos <= max_y) {
 
-                    target_position = asteroid.world_pos;
+                    laser_dst = asteroid.world_pos;
                     asteroid.dead = true;
                     shoot = false;
                     break;
@@ -372,7 +383,7 @@ int main(int argc, char **argv) {
 
         if (shoot) {
             const auto tmp = glm::inverse(perspective_transform) * glm::vec4(2.0 * xpos / WIDTH - 1.0, -2.0 * ypos / HEIGHT + 1.0, 1.0f, 1.0f);
-            target_position = glm::vec3(tmp) / tmp.w;
+            laser_dst = glm::vec3(tmp) / tmp.w;
             shoot = false;
         }
 
@@ -638,6 +649,7 @@ int main(int argc, char **argv) {
             program.StopUseShader();
         }
 
+        // Draw text
         {
             auto& program = shader_programs[ShaderType::TEXT];
 
@@ -665,14 +677,17 @@ int main(int argc, char **argv) {
             GL_CHECK_ERRORS;
         }
 
-        if (was_shot) {
+        // Draw laser
+        if (laser.recharge != 0) {
             auto& program = shader_programs[ShaderType::LASER];
 
             program.StartUseShader();
 
             program.SetUniform("transform", perspective_transform);
 
-            laser.draw(main_ship.world_pos, target_position);
+            glLineWidth(5.0f * float(laser.recharge) / laser_recharge_rate);
+            laser.draw(main_ship.world_pos, laser_dst);
+            glLineWidth(1.0f);
 
             program.StopUseShader();
         }

@@ -5,8 +5,9 @@
 ModelFactory::ModelFactory() {
     model_path = {
         {ModelName::E45_AIRCRAFT, "models/E-45-Aircraft/E 45 Aircraft_obj.obj"},
-        {ModelName::ENTERPRISE_NCC1701D, "models/Enterprise NCC 1701 D/enterprise1701d.obj"},
         {ModelName::REPVENATOR, "models/Venator/export.obj"},
+        {ModelName::FIGHTER, "models/fighter/sci-fi_fighter.obj"},
+        {ModelName::DEATHROW, "models/deathrow/DeathRow.obj"},
         {ModelName::MYST_ASTEROID, "models/mysterious_asteroid/A2.obj"},
         {ModelName::ASTEROID1, "models/asteroid1/asteroid1.obj"},
     };
@@ -16,27 +17,7 @@ ModelFactory::ModelFactory() {
         const auto& model_name = pair.first;
         const auto& path = pair.second;
 
-        Model model(path);
-
-        // Apply model-specific transformation
-        // Some models have weird default position
-        switch (model_name) {
-            case ModelName::E45_AIRCRAFT:
-                model.rotate(M_PI, {0, 1, 0});
-                model.move({0, 0, 3});
-                break;
-            case ModelName::ENTERPRISE_NCC1701D:
-                model.move({-44.15, -4, 8});
-                break;
-            case ModelName::REPVENATOR:
-                break;
-            case ModelName::MYST_ASTEROID:
-                break;
-            case ModelName::ASTEROID1:
-                break;
-        }
-
-        model_buffer[pair.first] = model;
+        model_buffer[pair.first] = Model(path);
     }
 }
 

@@ -257,12 +257,12 @@ int main(int argc, char **argv) {
     std::cout << "Loading skybox... ";
 
     const auto skybox = SkyBox::create({
-        "models/necro_nebula/GalaxyTex_PositiveX.png",
-        "models/necro_nebula/GalaxyTex_NegativeX.png",
-        "models/necro_nebula/GalaxyTex_NegativeY.png",
-        "models/necro_nebula/GalaxyTex_PositiveY.png",
-        "models/necro_nebula/GalaxyTex_PositiveZ.png",
-        "models/necro_nebula/GalaxyTex_NegativeZ.png",
+        "models/necro_nebula/little_GalaxyTex_PositiveX.png",
+        "models/necro_nebula/little_GalaxyTex_NegativeX.png",
+        "models/necro_nebula/little_GalaxyTex_NegativeY.png",
+        "models/necro_nebula/little_GalaxyTex_PositiveY.png",
+        "models/necro_nebula/little_GalaxyTex_PositiveZ.png",
+        "models/necro_nebula/little_GalaxyTex_NegativeZ.png",
     });
 
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
 
     float main_ship_hp = 100.0;
-    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, -3.0f}, {0.0f, M_PI, 0.0f});
+    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, 0.0f});
 
     std::list<Model> enemies;
 
@@ -380,7 +380,7 @@ int main(int argc, char **argv) {
                 // Shoot
                 if (rand() % 1000 == 0) {
                     asteroids.emplace_back(model_factory.get_model(ModelName::MYST_ASTEROID, it->world_pos, glm::vec3(0.0f), 0.1f),
-                        0.5f * glm::normalize(camera.position - it->world_pos));
+                        0.5f * glm::normalize(main_ship.world_pos - it->world_pos));
                 }
             } else {
                 if (it->die()) {
@@ -409,20 +409,12 @@ int main(int argc, char **argv) {
 
         // Enemies spawn
         if (rand() % 300 == 0) {
-            const float x = rand() % 50 - 25;
-            const float y = rand() % 50 - 25;
-
-            enemies.emplace_back(model_factory.get_model(ModelName::REPVENATOR, {x, y, -200.0f}, glm::vec3(0.0f), 1.0f));
+            enemies.push_back(model_factory.get_random_enemy(camera.position));
         }
 
         // Asteroids spawn
         if (rand() % 300 == 0) {
-            const float x = rand() % 50 - 25;
-            const float y = rand() % 50 - 25;
-            const glm::vec3 src(x, y, -200.0f);
-            const glm::vec3 velocity = glm::normalize(camera.position - src);
-
-            asteroids.emplace_back(model_factory.get_model(ModelName::ASTEROID1, src, glm::vec3(0.0f), 1.0f), velocity);
+            asteroids.push_back(model_factory.get_random_asteroid(camera.position, main_ship.world_pos));
         }
 
         main_ship.move(camera_shift);

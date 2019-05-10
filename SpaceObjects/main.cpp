@@ -65,7 +65,7 @@ static bool shoot = false;
 // Callback for actions with mouse buttons
 // Permit camera movements with left button pressed only
 static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             permitMouseMove = true;
@@ -74,7 +74,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             permitMouseMove = false;
         }
-    } else if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
         if (action == GLFW_PRESS) {
            shoot = true;
         }

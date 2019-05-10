@@ -368,13 +368,14 @@ int main(int argc, char **argv) {
         }
 
         // Process enemies
-        for (auto it = enemies.begin(); it != enemies.end(); it++) {
+        for (auto it = enemies.begin(); it != enemies.end();) {
             if (!it->dead) {
                 if (intersect(main_ship.getBBox(), it->getBBox())) {
                     main_ship_hp = std::max(main_ship_hp - it->damage, 0.0f);
                     it->dead = true;
                 } else if (it->world_pos.z > 200.0f) {
-                    enemies.erase(it--);
+                    enemies.erase(it++);
+                    continue;
                 }
 
                 // Shoot
@@ -384,27 +385,32 @@ int main(int argc, char **argv) {
                 }
             } else {
                 if (it->die()) {
-                    enemies.erase(it--);
+                    enemies.erase(it++);
+                    continue;
                 }
             }
             it->move(enemies_speed);
+            it++;
         }
 
         // Process asteroids
-        for (auto it = asteroids.begin(); it != asteroids.end(); it++) {
+        for (auto it = asteroids.begin(); it != asteroids.end();){
             if (!it->dead) {
                 if (intersect(main_ship.getBBox(), it->getBBox())) {
                     main_ship_hp = std::max(main_ship_hp - it->damage, 0.0f);
                     it->dead = true;
                 } else if (it->world_pos.z > 200.0f) {
-                    asteroids.erase(it--);
+                    asteroids.erase(it++);
+                    continue;
                 }
             } else {
                 if (it->die()) {
-                    asteroids.erase(it--);
+                    asteroids.erase(it++);
+                    continue;
                 }
             }
             it->moveAuto();
+            it++;
         }
 
         // Enemies spawn

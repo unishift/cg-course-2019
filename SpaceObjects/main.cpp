@@ -440,11 +440,13 @@ int main(int argc, char **argv) {
         // Enemies spawn
         if (rand() % 300 == 0) {
             enemies.push_back(model_factory.get_random_enemy(camera.position));
+            enemies.back().damage = 50.0f;
         }
 
         // Asteroids spawn
         if (rand() % 300 == 0) {
             asteroids.push_back(model_factory.get_random_asteroid(camera.position, main_ship.world_pos));
+            asteroids.back().damage = 25.0f;
         }
 
         main_ship.move(camera_shift);

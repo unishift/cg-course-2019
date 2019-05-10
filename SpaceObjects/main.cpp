@@ -471,8 +471,6 @@ int main(int argc, char **argv) {
             program.StartUseShader();
             GL_CHECK_ERRORS;
 
-
-
             // Draw enemies
             for (const auto &model : enemies) {
                 if (model.dead) continue;

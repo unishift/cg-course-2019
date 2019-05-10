@@ -168,8 +168,7 @@ static void keyboardControls(GLFWwindow *window, int key, int scancode, int acti
 enum class ShaderType {
     CLASSIC,
     SKYBOX,
-    PARTICLES_PASSIVE,
-    PARTICLES_ACTIVE,
+    PARTICLES,
     CROSSHAIR,
     EXPLOSION,
     TEXT,
@@ -226,14 +225,10 @@ int main(int argc, char **argv) {
         {GL_VERTEX_SHADER,   "shaders/skybox_vertex.glsl"},
         {GL_FRAGMENT_SHADER, "shaders/skybox_fragment.glsl"},
     });
-    shader_programs[ShaderType::PARTICLES_PASSIVE] = ShaderProgram({
-        {GL_VERTEX_SHADER,   "shaders/particles_passive_vertex.glsl"},
-        {GL_FRAGMENT_SHADER, "shaders/particles_passive_fragment.glsl"},
-    });
-    shader_programs[ShaderType::PARTICLES_ACTIVE] = ShaderProgram({
-        {GL_VERTEX_SHADER,   "shaders/particles_active_vertex.glsl"},
-        {GL_GEOMETRY_SHADER, "shaders/particles_active_geometry.glsl"},
-        {GL_FRAGMENT_SHADER, "shaders/particles_active_fragment.glsl"},
+    shader_programs[ShaderType::PARTICLES] = ShaderProgram({
+        {GL_VERTEX_SHADER,   "shaders/particles_vertex.glsl"},
+        {GL_GEOMETRY_SHADER, "shaders/particles_geometry.glsl"},
+        {GL_FRAGMENT_SHADER, "shaders/particles_fragment.glsl"},
     });
     shader_programs[ShaderType::CROSSHAIR] = ShaderProgram({
         {GL_VERTEX_SHADER,   "shaders/crosshair_vertex.glsl"},
@@ -449,7 +444,7 @@ int main(int argc, char **argv) {
 
         // Draw particles
         {
-            auto& program = shader_programs[ShaderType::PARTICLES_ACTIVE];
+            auto& program = shader_programs[ShaderType::PARTICLES];
 
             program.StartUseShader();
 

@@ -71,7 +71,7 @@ static void mouseButton(GLFWwindow *window, int button, int action, int mods) {
             permitMouseMove = true;
 
         } else if (action == GLFW_RELEASE) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             permitMouseMove = false;
         }
     } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
     }
 
     glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseMove);
     glfwSetMouseButtonCallback(window, mouseButton);
     glfwSetKeyCallback(window, keyboardControls);

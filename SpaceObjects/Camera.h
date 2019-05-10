@@ -2,7 +2,7 @@
 #define SPACEOBJECTS_CAMERA_H
 
 #include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 enum class CameraMode {

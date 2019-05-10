@@ -28,6 +28,8 @@ set(ADDITIONAL_RUNTIME_LIBRARY_DIRS
 
 set (CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG}")
 
+add_definitions("-DGLM_ENABLE_EXPERIMENTAL")
+
 if(WIN32)
     set(ADDITIONAL_INCLUDE_DIRS
         ${ADDITIONAL_INCLUDE_DIRS}
@@ -54,6 +56,7 @@ if(DEVELOP_MODE)
     add_custom_command(TARGET main POST_BUILD COMMAND ln -sfn "${PROJECT_SOURCE_DIR}/models" "${PROJECT_BINARY_DIR}/models")
 else()
     add_custom_command(TARGET main POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/shaders" "${PROJECT_BINARY_DIR}/shaders")
+    add_custom_command(TARGET main POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/models" "${PROJECT_BINARY_DIR}/models")
 endif()
 
 if(WIN32)

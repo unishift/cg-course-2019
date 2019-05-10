@@ -33,9 +33,11 @@ struct Camera {
 
     glm::mat4 getViewTransform() const {
         if (mode == CameraMode::FIRST_PERSON) {
-            return glm::lookAt(position, rot * (position + direction), rot * up);
+            const auto tmp_position = position + glm::vec3(0.0f, 0.5f, -1.0f);
+            return glm::lookAt(tmp_position, rot * (tmp_position + direction), rot * up);
         } else if (mode == CameraMode::THIRD_PERSON) {
-            return glm::lookAt(position - rot * direction, position, rot * up);
+            const auto tmp_position = position + glm::vec3(0.0f, 3.0f, 0.0f);
+            return glm::lookAt(tmp_position - rot * direction, tmp_position, rot * up);
         }
     }
 };

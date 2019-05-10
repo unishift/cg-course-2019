@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
 
     int score = 0;
     float main_ship_hp = 100.0;
-    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, 0.0f});
+    auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT);
 
     std::list<Model> enemies;
 
@@ -578,26 +578,6 @@ int main(int argc, char **argv) {
                 }
             }
 
-            // Main ship
-            if (!main_ship.dead) {
-                const auto local = perspective_transform * main_ship.getWorldTransform();
-                for (const auto &object : main_ship.objects) {
-                    const auto transform = local * object.getWorldTransform();
-                    program.SetUniform("transform", transform);
-
-                    const auto color = object.getDiffuseColor();
-                    program.SetUniform("diffuse_color", color);
-
-                    const bool use_texture = object.haveTexture();
-                    program.SetUniform("use_texture", use_texture);
-
-                    const float opacity = object.getOpacity();
-                    program.SetUniform("opacity", opacity);
-
-                    object.draw();
-                    GL_CHECK_ERRORS;
-                }
-            }
             program.StopUseShader();
         }
 
@@ -655,27 +635,70 @@ int main(int argc, char **argv) {
                 }
             }
 
-            // Main ship
-            if (main_ship.dead && !main_ship.die()) {
-                const auto local = perspective_transform * main_ship.getWorldTransform();
-                const auto death_coef = float(main_ship.death_countdown) / 60;
-                program.SetUniform("magnitude", (1.0f - death_coef) * 5.0f);
-                for (const auto &object : main_ship.objects) {
-                    const auto transform = local * object.getWorldTransform();
-                    program.SetUniform("transform", transform);
+            program.StopUseShader();
+        }
 
-                    const auto color = object.getDiffuseColor();
-                    program.SetUniform("diffuse_color", color);
+        // Draw laser
+        if (laser.recharge != 0) {
+            auto& program = shader_programs[ShaderType::LASER];
 
-                    const bool use_texture = object.haveTexture();
-                    program.SetUniform("use_texture", use_texture);
+            program.StartUseShader();
 
-                    const float opacity = death_coef * object.getOpacity();
-                    program.SetUniform("opacity", opacity);
+            program.SetUniform("transform", perspective_transform);
 
-                    object.draw();
-                    GL_CHECK_ERRORS;
-                }
+            glLineWidth(5.0f * float(laser.recharge) / laser_recharge_rate);
+            laser.draw(main_ship.world_pos, laser_dst);
+            glLineWidth(1.0f);
+
+            program.StopUseShader();
+        }
+
+        // Main ship
+        if (!main_ship.dead) {
+            auto& program = shader_programs[ShaderType::CLASSIC];
+            program.StartUseShader();
+
+            const auto local = perspective_transform * main_ship.getWorldTransform();
+            for (const auto &object : main_ship.objects) {
+                const auto transform = local * object.getWorldTransform();
+                program.SetUniform("transform", transform);
+
+                const auto color = object.getDiffuseColor();
+                program.SetUniform("diffuse_color", color);
+
+                const bool use_texture = object.haveTexture();
+                program.SetUniform("use_texture", use_texture);
+
+                const float opacity = object.getOpacity();
+                program.SetUniform("opacity", opacity);
+
+                object.draw();
+                GL_CHECK_ERRORS;
+            }
+            program.StopUseShader();
+
+        } else if (!main_ship.die()) {
+            auto& program = shader_programs[ShaderType::EXPLOSION];
+            program.StartUseShader();
+
+            const auto local = perspective_transform * main_ship.getWorldTransform();
+            const auto death_coef = float(main_ship.death_countdown) / 60;
+            program.SetUniform("magnitude", (1.0f - death_coef) * 5.0f);
+            for (const auto &object : main_ship.objects) {
+                const auto transform = local * object.getWorldTransform();
+                program.SetUniform("transform", transform);
+
+                const auto color = object.getDiffuseColor();
+                program.SetUniform("diffuse_color", color);
+
+                const bool use_texture = object.haveTexture();
+                program.SetUniform("use_texture", use_texture);
+
+                const float opacity = death_coef * object.getOpacity();
+                program.SetUniform("opacity", opacity);
+
+                object.draw();
+                GL_CHECK_ERRORS;
             }
 
             program.StopUseShader();
@@ -725,21 +748,6 @@ int main(int argc, char **argv) {
 
             program.StopUseShader();
             GL_CHECK_ERRORS;
-        }
-
-        // Draw laser
-        if (laser.recharge != 0) {
-            auto& program = shader_programs[ShaderType::LASER];
-
-            program.StartUseShader();
-
-            program.SetUniform("transform", perspective_transform);
-
-            glLineWidth(5.0f * float(laser.recharge) / laser_recharge_rate);
-            laser.draw(main_ship.world_pos, laser_dst);
-            glLineWidth(1.0f);
-
-            program.StopUseShader();
         }
 
         glfwSwapBuffers(window);

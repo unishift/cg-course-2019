@@ -7,6 +7,7 @@
 
 enum ModelName {
     E45_AIRCRAFT,
+    ROCKET,
     REPVENATOR,
     FIGHTER,
     DEATHROW,

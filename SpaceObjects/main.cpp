@@ -400,7 +400,7 @@ int main(int argc, char **argv) {
 
                 // Shoot
                 if (rand() % 1000 == 0) {
-                    asteroids.emplace_back(model_factory.get_model(ModelName::MYST_ASTEROID, it->world_pos, glm::vec3(0.0f), 0.1f),
+                    asteroids.emplace_back(model_factory.get_model(ModelName::ROCKET, it->world_pos),
                         0.5f * glm::normalize(main_ship.world_pos - it->world_pos));
                 }
             } else {

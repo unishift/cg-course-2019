@@ -5,6 +5,7 @@
 ModelFactory::ModelFactory() {
     model_path = {
         {ModelName::E45_AIRCRAFT, "models/E-45-Aircraft/E 45 Aircraft_obj.obj"},
+        {ModelName::ROCKET, "models/rocket/Rocket.obj"},
         {ModelName::REPVENATOR, "models/Venator/export.obj"},
         {ModelName::FIGHTER, "models/fighter/sci-fi_fighter.obj"},
         {ModelName::DEATHROW, "models/deathrow/DeathRow.obj"},

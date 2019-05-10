@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <assimp/scene.h>
+#include <glm/gtx/quaternion.hpp>
 
 #include "BBox.h"
 #include "Object.h"
@@ -69,7 +70,13 @@ public:
 
     Asteroid(const Model& model, const glm::vec3& velocity) :
         Model(model),
-        velocity(velocity) {}
+        velocity(velocity) {
+
+        const auto direction = glm::normalize(velocity);
+        const auto q = glm::rotation({0.0f, 0.0f, 1.0f}, direction);
+
+        rot = glm::toMat4(q) * rot;
+    }
 
     void moveAuto() {
         world_pos += velocity;

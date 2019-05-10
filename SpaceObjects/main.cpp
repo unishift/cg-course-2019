@@ -277,6 +277,7 @@ int main(int argc, char **argv) {
 
     std::cout << "\x1b[32mDone\x1b[0m" << std::endl;
 
+    int score = 0;
     float main_ship_hp = 100.0;
     auto main_ship = model_factory.get_model(ModelName::E45_AIRCRAFT, {0.0f, -3.0f, 0.0f});
 
@@ -357,6 +358,7 @@ int main(int argc, char **argv) {
                     laser_dst = enemy.world_pos;
                     enemy.dead = true;
                     shoot = false;
+                    score += enemy.damage;
                     break;
                 }
             }
@@ -380,6 +382,7 @@ int main(int argc, char **argv) {
                     laser_dst = asteroid.world_pos;
                     asteroid.dead = true;
                     shoot = false;
+                    score += asteroid.damage;
                     break;
                 }
             }
@@ -666,7 +669,12 @@ int main(int argc, char **argv) {
             // Health Points
             program.SetUniform("transform", glm::translate(transform, {5.0f, 5.0f, 0.0f}));
             program.SetUniform("text_color", glm::vec3(1.0f, 0.0f, 0.0f));
-            font.draw("HP: " + std::to_string(int(main_ship_hp)));
+            font.draw("Health: " + std::to_string(int(main_ship_hp)));
+
+            // Score
+            program.SetUniform("transform", glm::translate(transform, {5.0f, 45.0f, 0.0f}));
+            program.SetUniform("text_color", glm::vec3(1.0f, 0.5f, 0.0f));
+            font.draw("Score: " + std::to_string(score));
 
             // Game Over
             if (main_ship.dead) {
